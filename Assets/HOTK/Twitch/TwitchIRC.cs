@@ -58,7 +58,7 @@ public class TwitchIRC : MonoBehaviour
         _inProc.Start();
 
         CancelInvoke("CheckConnection");
-        Invoke("CheckConnection", 10f);
+        Invoke("CheckConnection", 20f);
     }
 
     private void CheckConnection()
@@ -161,7 +161,6 @@ public class TwitchIRC : MonoBehaviour
                         lock (_recievedMsgs)
                         {
                             _recievedMsgs.Add(ToTwitchNotice("Acknowledging Client Capabilities!"));
-                            _connected = true;
                         }
                         break;
                     case "USERSTATE":
