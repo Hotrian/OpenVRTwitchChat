@@ -75,15 +75,18 @@
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\ButtonSwapControllers.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\DropdownHideWhenNotController.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\DropdownMatchEnumOptions.cs" />
+    <Compile Include="Assets\HOTK\Example Content\UI Scripts\DropdownMatchFileOptions.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\DropdownSaveLoadController.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\HOTK_DemoDesktopCameraScript.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\InputFieldHideAnimationSettingsWhenNotSelected.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\MaterialColorMatchSlider.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\OffsetMatchInputField.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\OffsetMatchSlider.cs" />
+    <Compile Include="Assets\HOTK\Example Content\UI Scripts\PitchMatchSlider.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\RotationMatchInputField.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\RotationMatchSlider.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\ScaleMatchInputField.cs" />
+    <Compile Include="Assets\HOTK\Example Content\UI Scripts\VolumeMatchSlider.cs" />
     <Compile Include="Assets\HOTK\HOTK_Overlay.cs" />
     <Compile Include="Assets\HOTK\HOTK_TrackedDevice.cs" />
     <Compile Include="Assets\HOTK\HOTK_TrackedDeviceManager.cs" />
@@ -106,6 +109,7 @@
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_Utils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Resources\Twitch\Sounds\GUI Sound Effects\LICENSE.txt" />
     <None Include="Assets\SteamVR\Resources\SteamVR_Blit.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_BlitFlip.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_HiddenArea.shader" />

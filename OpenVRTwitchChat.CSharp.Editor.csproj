@@ -106,6 +106,7 @@
     <Compile Include="Assets\SteamVR\Editor\SteamVR_Update.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Resources\Twitch\Sounds\GUI Sound Effects\LICENSE.txt" />
     <None Include="Assets\SteamVR\Resources\SteamVR_Blit.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_BlitFlip.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_HiddenArea.shader" />

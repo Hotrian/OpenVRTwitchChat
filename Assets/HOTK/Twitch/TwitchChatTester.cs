@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +41,11 @@ public class TwitchChatTester : MonoBehaviour
     }
     private TextMesh _textMesh;
 
+    public TextMesh ViewerCountTextMesh;
+    public TextMesh ChannelNameTextMesh;
+
+    public AudioSource IncomingMessageSound;
+
     public TwitchIRC IRC
     {
         get { return _irc ?? (_irc = GetComponent<TwitchIRC>()); }
@@ -48,16 +54,24 @@ public class TwitchChatTester : MonoBehaviour
 
     private readonly List<TwitchChat> _userChat = new List<TwitchChat>();
 
-    private bool _connected;
+    public bool Connected
+    {
+        get; private set;
+    }
 
     public void Awake()
     {
         _instance = this;
     }
 
+    public void Start()
+    {
+        ClearViewerCountAndChannelName("Disconnected");
+    }
+
     public void ToggleConnect()
     {
-        if (!_connected)
+        if (!Connected)
         {
             if (UsernameBox != null && UsernameBox.text != "")
             {
@@ -75,15 +89,16 @@ public class TwitchChatTester : MonoBehaviour
                         ChannelBox.interactable = false;
                         ConnectButtonText.text = "Press to Disconnect";
 
-                        _connected = true;
-                        OnChatMsg(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelBox.text, UsernameBox.text)));
+                        Connected = true;
+                        OnChatMsg(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelFirstLetterToUpper(ChannelBox.text), FirstLetterToUpper(UsernameBox.text))));
                         IRC.NickName = UsernameBox.text;
                         IRC.Oauth = OAuthBox.text;
-                        IRC.ChannelName = ChannelBox.text.ToLower();
+                        IRC.ChannelName = ChannelBox.text.Trim().ToLower();
 
                         IRC.enabled = true;
                         IRC.MessageRecievedEvent.AddListener(OnChatMsg);
                         IRC.StartIRC();
+                        StartCoroutine("UpdateViews");
                     }
                     else AddSystemNotice("Unable to Connect: Enter a Valid Channel Name!", TwitchIRC.NoticeColor.Red);
                 }
@@ -98,11 +113,57 @@ public class TwitchChatTester : MonoBehaviour
             ChannelBox.interactable = true;
             ConnectButtonText.text = "Press to Connect";
 
-            _connected = false;
+            Connected = false;
             IRC.MessageRecievedEvent.RemoveListener(OnChatMsg);
             IRC.enabled = false;
             OnChatMsg(TwitchIRC.ToTwitchNotice("Disconnected!", TwitchIRC.NoticeColor.Red));
+            StopCoroutine("UpdateViews");
+            ClearViewerCountAndChannelName("Disconnected");
         }
+    }
+
+    IEnumerator UpdateViews()
+    {
+        while (Connected && IRC.ChannelName.Length > 0)
+        {
+            WWW www = new WWW("https://api.twitch.tv/kraken/streams/" + IRC.ChannelName);
+            yield return www;
+            ChannelDataFull obj = JsonUtility.FromJson<ChannelDataFull>(www.text);
+            if (obj != null)
+            {
+                if (obj.stream != null)
+                {
+                    if (obj.stream.channel != null)
+                    {
+                        if (ChannelNameTextMesh != null)
+                        {
+                            var text = "";
+                            if (!string.IsNullOrEmpty(obj.stream.channel.display_name)) text = string.Format("#{0}", obj.stream.channel.display_name);
+                            else if (!string.IsNullOrEmpty(obj.stream.channel.name)) text = string.Format("#{0}", obj.stream.channel.name);
+                            else text = "Not Streaming";
+                            ChannelNameTextMesh.text = text;
+                        }
+                        if (ViewerCountTextMesh != null) ViewerCountTextMesh.text = string.Format("Viewers: {0}", obj.stream.viewers);
+                    }
+                    else
+                    {
+                        ClearViewerCountAndChannelName();
+                    }
+                }
+                else
+                {
+                    ClearViewerCountAndChannelName();
+                }
+            }
+            yield return new WaitForSeconds(10f);
+        }
+    }
+
+    private void ClearViewerCountAndChannelName(string channelText = null)
+    {
+
+        if (ChannelNameTextMesh != null) ChannelNameTextMesh.text = (channelText ?? "");
+        if (ViewerCountTextMesh != null) ViewerCountTextMesh.text = "";
     }
 
     private void OnChatMsg(string msg)
@@ -151,6 +212,7 @@ public class TwitchChatTester : MonoBehaviour
                 break;
             case "PRIVMSG":
                 AddMsg(FirstLetterToUpper(nickname), TwitchIRC.GetUserColor(nickname), chat);
+                if (IncomingMessageSound != null && IncomingMessageSound.clip != null) IncomingMessageSound.Play();
                 break;
         }
     }
@@ -179,7 +241,7 @@ public class TwitchChatTester : MonoBehaviour
         foreach (var m in messages)
         {
             TextMesh.text = string.Format("<color=#{0}FF>{1}</color>: ", m.Color, m.Name);
-            string builder = "";
+            var builder = "";
             var parts = m.Message.Split(' ');
             foreach (var t in parts)
             {
@@ -208,4 +270,113 @@ public class TwitchChatTester : MonoBehaviour
 
         return str.ToUpper();
     }
+
+    public static string ChannelFirstLetterToUpper(string str)
+    {
+        if (str == null)
+            return null;
+
+        if (str.Length <= 1) return str.ToUpper();
+        var pieces = str.Split('_');
+        var st = "";
+        for (var i = 0; i < pieces.Length; i++)
+        {
+            st += char.ToUpper(pieces[i][0]) + pieces[i].Substring(1);
+            if (i < pieces.Length - 1)
+                st += "_";
+        }
+        return st;
+    }
+
+// These are filled by JsonUtility so the compiler is confused
+#pragma warning disable 649
+// ReSharper disable InconsistentNaming
+    [Serializable]
+    private class ChannelDataFull
+    {
+        public ChannelLinksData _links;
+        public StreamData stream;
+    }
+
+    [Serializable]
+    private class ChannelLinksData
+    {
+        public string channel;
+        public string self;
+    }
+
+    [Serializable]
+    private class StreamData
+    {
+        public string game;
+        public uint viewers;
+        public float average_fps;
+        public uint delay;
+        public uint video_height;
+        public bool is_playlist;
+        public string created_at;
+        public uint _id;
+        public StreamChannelData channel;
+        public StreamPreviewData preview;
+        public StreamLinksData _links;
+    }
+    
+    [Serializable]
+    private class StreamChannelData
+    {
+        public bool mature;
+        public string status;
+        public string broadcaster_language;
+        public string display_name;
+        public string game;
+        public string delay;
+        public string language;
+        public uint _id;
+        public string name;
+        public string created_at;
+        public string updated_at;
+        public string logo;
+        public string banner;
+        public string video_banner;
+        public string background;
+        public string profile_banner;
+        public string profile_banner_background_color;
+        public bool partner;
+        public string url;
+        public uint views;
+        public uint followers;
+        public StreamChanneLinksData _links;
+    }
+
+    [Serializable]
+    private class StreamChanneLinksData
+    {
+        public string self;
+        public string follows;
+        public string commercial;
+        public string stream_key;
+        public string chat;
+        public string features;
+        public string subscriptions;
+        public string editors;
+        public string teams;
+        public string videos;
+    }
+
+    [Serializable]
+    private class StreamPreviewData
+    {
+        public string small;
+        public string medium;
+        public string large;
+        public string template;
+    }
+
+    [Serializable]
+    private class StreamLinksData
+    {
+        public string self;
+    }
+#pragma warning restore 649
+// ReSharper restore InconsistentNaming
 }

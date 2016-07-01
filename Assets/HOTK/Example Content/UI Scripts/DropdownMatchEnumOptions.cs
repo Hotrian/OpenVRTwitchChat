@@ -68,7 +68,7 @@ public class DropdownMatchEnumOptions : MonoBehaviour
         }
     }
 
-    public enum EnumSelection 
+    public enum EnumSelection
     {
         AttachmentDevice,
         AttachmentPoint,

@@ -32,6 +32,8 @@ public class TwitchIRC : MonoBehaviour
     public void StartIRC()
     {
         _stopThreads = false;
+        _commandQueue.Clear();
+        _recievedMsgs.Clear();
         var sock = new System.Net.Sockets.TcpClient();
         sock.Connect(Server, Port);
         if (!sock.Connected)

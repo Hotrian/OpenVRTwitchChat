@@ -20,6 +20,10 @@ public class DropdownSaveLoadController : MonoBehaviour
     public RotationMatchSlider RYSlider;
     public RotationMatchSlider RZSlider;
 
+    public DropdownMatchFileOptions ChatSoundDropdown;
+    public VolumeMatchSlider VolumeSlider;
+    public PitchMatchSlider PitchSlider;
+
     public DropdownMatchEnumOptions DeviceDropdown;
     public DropdownMatchEnumOptions PointDropdown;
     public DropdownMatchEnumOptions AnimationDropdown;
@@ -123,8 +127,8 @@ public class DropdownSaveLoadController : MonoBehaviour
         if (!TwitchSettingsSaver.SavedSettings.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
         TwitchChatTester.Instance.AddSystemNotice("Loading saved settings " + Dropdown.options[Dropdown.value].text);
         TwitchSettingsSaver.Current = Dropdown.options[Dropdown.value].text;
-        UsernameField.text = settings.Username;
-        ChannelField.text = settings.Channel;
+        if (!TwitchChatTester.Instance.Connected) UsernameField.text = settings.Username;
+        if (!TwitchChatTester.Instance.Connected) ChannelField.text = settings.Channel;
 
         XSlider.Slider.value = settings.X;
         YSlider.Slider.value = settings.Y;
@@ -133,6 +137,18 @@ public class DropdownSaveLoadController : MonoBehaviour
         RXSlider.Slider.value = settings.RX;
         RYSlider.Slider.value = settings.RY;
         RZSlider.Slider.value = settings.RZ;
+
+        if (settings.SaveFileVersion >= 1) // Save File compatability
+        {
+            VolumeSlider.Slider.value = settings.Volume;
+            VolumeSlider.OnSliderEndDrag(false);
+        }
+        if (settings.SaveFileVersion >= 1) // Save File compatability
+        {
+            PitchSlider.Slider.value = settings.Pitch;
+            PitchSlider.OnSliderEndDrag(false);
+        }
+        ChatSoundDropdown.SetToOption(settings.SaveFileVersion >= 1 ? settings.ChatSound : "gui-sound-effects-031", true); // Save File compatability
 
         DeviceDropdown.SetToOption(settings.Device.ToString());
         PointDropdown.SetToOption(settings.Point.ToString());
@@ -169,10 +185,16 @@ public class DropdownSaveLoadController : MonoBehaviour
             TwitchSettings settings;
             if (!TwitchSettingsSaver.SavedSettings.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
             TwitchChatTester.Instance.AddSystemNotice("Overwriting saved settings " + Dropdown.options[Dropdown.value].text);
+            settings.SaveFileVersion = TwitchSettings.CurrentSaveVersion;
+
             settings.Username = UsernameField.text;
             settings.Channel = ChannelField.text;
             settings.X = OverlayToSave.AnchorOffset.x; settings.Y = OverlayToSave.AnchorOffset.y; settings.Z = OverlayToSave.AnchorOffset.z;
             settings.RX = OverlayToSave.transform.eulerAngles.x; settings.RY = OverlayToSave.transform.eulerAngles.y; settings.RZ = OverlayToSave.transform.eulerAngles.z;
+
+            settings.ChatSound = ChatSoundDropdown.Dropdown.options[ChatSoundDropdown.Dropdown.value].text;
+            settings.Volume = VolumeSlider.Slider.value;
+            settings.Pitch = PitchSlider.Slider.value;
 
             settings.Device = OverlayToSave.AnchorDevice;
             settings.Point = OverlayToSave.AnchorPoint;
@@ -203,10 +225,16 @@ public class DropdownSaveLoadController : MonoBehaviour
     {
         return new TwitchSettings()
         {
+            SaveFileVersion = TwitchSettings.CurrentSaveVersion,
+
             Username = UsernameField.text,
             Channel = ChannelField.text,
             X = o.AnchorOffset.x, Y = o.AnchorOffset.y, Z = o.AnchorOffset.z,
             RX = o.transform.eulerAngles.x, RY = o.transform.eulerAngles.y, RZ = o.transform.eulerAngles.z,
+
+            ChatSound = ChatSoundDropdown.Dropdown.options[ChatSoundDropdown.Dropdown.value].text,
+            Volume = VolumeSlider.Slider.value,
+            Pitch = PitchSlider.Slider.value,
 
             Device = o.AnchorDevice,
             Point = o.AnchorPoint,
