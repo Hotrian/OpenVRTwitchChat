@@ -12,10 +12,12 @@ To use this, Download and launch [the latest release](https://github.com/Hotrian
 - Offset Chat positionally and rotationally.
 - Basic Gaze Detection and Animation support (Fade In/Out or Scale Up/Down on Gaze).
 - Extremely Basic Save/Load Support! Saves all settings except OAuth Key!
+- Notification Sound On Chat Message Received (Set Volume to 0 to Disable)
+- Active Viewer Count (Updated as often as Twitch allows)
 
 ## Basic Controls
 (click to enlarge)
-![basic controls](http://image.prntscr.com/image/383d945a47b54b1194bf5dd72e9e726e.png)
+![basic controls](http://image.prntscr.com/image/224cbd14d02f4e209879ef9d5f647be2.png)
 
 ## Demos
 Note that these demos were taken during development, and do not necessarily represent the current state of the branch.
@@ -30,9 +32,15 @@ Note that these demos were taken during development, and do not necessarily repr
 
 >For clarification, what I did was right-click on the .exe file, clicked "Properties", went to the "Compatibility" tab, and checked the box under "Run as Administrator". For the record, I have also done this with Steam and SteamVR. If you're having any issues with any of these programs, I would start there. 
 
-## Additional Notes
+## Additional Notes / Tips & Tricks
 - When attaching Overlays to controllers, the offset is reoriented to match the Base Position's orientation. X+ should always move the Overlay to the Right, Y+ should always move Up, and Z+ should always move Forward, relative to the Overlay.
 - You can copy and paste your oauth key, you don't have to manually type it out, but you do have to get it off that site, or off another site that generates Twitch OAuth keys.
+- OAuth is not saved for security reasons.
+- You can put the Overlay up in the sky and tilt it if you don't like it on the controllers and find it obtrusive in the world. Just set the Base Position to "World", then mess with the middle "Positional Control" slider and the top "Rotational Control" slider until you find a position that works for you :)
+- You can stream the Display Mirror if you want your viewers to be able to see the Overlay, or you can stream the game's output if you do not.
+- To save a new settings profile, select "New.." from the dropdown and press "Save", then enter a name in the box just below and press the new "Save" button.
+- There isn't currently a button to delete profiles :P You can delete them by navigating to "C:\Users\\\<USERNAME\>\AppData\LocalLow\HeadlessOverlayToolkit\TwitchChatOverlay\" and deleting the file "savedSettings.gd". Sorry for the inconvenience.
+- You can disable Chat Notification Sounds by setting the Volume slider to 0.
 
 ## How can I help?
 
@@ -40,10 +48,12 @@ If you know how to program, we could always use help! Feel free to fork the repo
 
 ## Special Thanks
 
-Thanks to Grahnz for the base [TwitchIRC.cs](https://github.com/Grahnz/TwitchIRC-Unity/blob/master/TwitchIRC.cs) script!
+(No endorsements are intended to be implied.)
 
-Thanks to [Eric Daily](http://tutsplus.com/authors/eric-daily) for the base [SaveLoad](http://gamedevelopment.tutsplus.com/tutorials/how-to-save-and-load-your-players-progress-in-unity--cms-20934) script!
+Thanks to Grahnz for the base [TwitchIRC.cs](https://github.com/Grahnz/TwitchIRC-Unity/blob/master/TwitchIRC.cs) script! The license file is available [here](../blob/master/TwitchIRC-LICENSE.txt).
 
-Thanks to [Jalastram](https://www.freesound.org/people/jalastram/) for some of their sounds!
+Thanks to [Eric Daily](http://tutsplus.com/authors/eric-daily) for the base [SaveLoad](http://gamedevelopment.tutsplus.com/tutorials/how-to-save-and-load-your-players-progress-in-unity--cms-20934) script! The license file is available [here](../blob/master/SaveLoad-LICENSE.txt).
+
+Thanks to [Jalastram](https://www.freesound.org/people/jalastram/) for some of their sounds! The license file for these can be found [here](../blob/master/Assets/Resources/Twitch/Sounds/GUI Sound Effects/LICENSE.txt).
 
 Thanks to everyone who has tested it so far! The feedback has really helped speed things along!
