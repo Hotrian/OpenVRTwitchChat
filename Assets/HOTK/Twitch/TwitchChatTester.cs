@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine.UI;
 
@@ -73,6 +74,8 @@ public class TwitchChatTester : MonoBehaviour
     {
         ClearViewerCountAndChannelName("Disconnected");
     }
+
+    private readonly Stopwatch _messageSoundStopwatch = new Stopwatch(); // Used to prevent message sound spamming
 
     public void ToggleConnect()
     {
@@ -222,6 +225,10 @@ public class TwitchChatTester : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Set the Pitch of the Chat Message sound
+    /// </summary>
+    /// <param name="pitch"></param>
     public void SetMessagePitch(float pitch)
     {
         IncomingMessageSoundSource1.pitch = pitch;
@@ -232,6 +239,10 @@ public class TwitchChatTester : MonoBehaviour
         IncomingMessageSoundSource6.pitch = pitch;
     }
 
+    /// <summary>
+    /// Set the AudioClip to be played when Chat Messages are received
+    /// </summary>
+    /// <param name="sound"></param>
     public void SetMessageSound(AudioClip sound)
     {
         IncomingMessageSoundSource1.clip = sound;
@@ -242,6 +253,10 @@ public class TwitchChatTester : MonoBehaviour
         IncomingMessageSoundSource6.clip = sound;
     }
 
+    /// <summary>
+    /// Set the Volume of the Chat Message sound
+    /// </summary>
+    /// <param name="volume"></param>
     public void SetMessageVolume(float volume)
     {
         IncomingMessageSoundSource1.volume = volume;
@@ -254,6 +269,17 @@ public class TwitchChatTester : MonoBehaviour
 
     public void PlayMessageSound()
     {
+        // Prevent the message sound from spamming too rapidly
+        if (_messageSoundStopwatch.IsRunning)
+        {
+            if (_messageSoundStopwatch.ElapsedMilliseconds < 50) return;
+            _messageSoundStopwatch.Reset();
+            _messageSoundStopwatch.Start();
+        }
+        else
+            _messageSoundStopwatch.Start();
+
+        // Play the message sound on an available channel (allows simultaneous message sounds)
         if (IncomingMessageSoundSource1 != null && IncomingMessageSoundSource1.clip != null && !IncomingMessageSoundSource1.isPlaying) IncomingMessageSoundSource1.Play();
         else if (IncomingMessageSoundSource2 != null && IncomingMessageSoundSource2.clip != null && !IncomingMessageSoundSource2.isPlaying) IncomingMessageSoundSource2.Play();
         else if (IncomingMessageSoundSource3 != null && IncomingMessageSoundSource3.clip != null && !IncomingMessageSoundSource3.isPlaying) IncomingMessageSoundSource3.Play();
