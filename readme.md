@@ -6,7 +6,7 @@ This is a stripped down version of the SteamVR Unity Plugin with a custom Overla
 To use this, Download and launch [the latest release](https://github.com/Hotrian/OpenVRTwitchChat/releases), and enter your Twitch Username, OAuth Key (get your [OAuth Key here](http://www.twitchapps.com/tmi/)) and the desired Channel, then press "Press to Connect" and it should momentarilly connect to your Twitch chat. Check behind one of your controllers (should be left!) for your chat display! It should zoom up when you look at it.
 
 ## Features
-- See Twitch Chat in VR! From Any Game!
+- See Twitch Chat in VR! From Any SteamVR Game!
 - Easily attach Chat to the Screen, a Controller, or drop it in the World.
 - Easily snap Controller attached Chat to a set "Base Position".
 - Offset Chat positionally and rotationally.
