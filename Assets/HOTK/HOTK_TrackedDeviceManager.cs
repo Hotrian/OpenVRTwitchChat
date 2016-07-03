@@ -76,7 +76,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
         var system = OpenVR.System;
         if (system == null)
         {
-            LogWarning("OpenVR System not found.");
+            LogError("OpenVR System not found.");
             return;
         }
 
@@ -95,9 +95,16 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
         }
         if (_hmdIndex != OpenVR.k_unTrackedDeviceIndexInvalid)
         {
-            Log("Found HMD ( Device: " + _hmdIndex + " )");
+            Log("Found HMD ( Device: {0} )", _hmdIndex);
         }
     }
+
+    public void ResetControllerFindAttemptCount()
+    {
+        _noControllersCount = 0;
+    }
+
+    private uint _noControllersCount;
 
     /// <summary>
     /// Attempt to find both controllers.
@@ -107,7 +114,11 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
         var system = OpenVR.System;
         if (system == null)
         {
-            LogWarning("OpenVR System not found.");
+            LogError("OpenVR System not found.");
+            return;
+        }
+        if (_noControllersCount >= 10)
+        {
             return;
         }
 
@@ -126,7 +137,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
 
         if (_leftIndex != OpenVR.k_unTrackedDeviceIndexInvalid && _rightIndex == OpenVR.k_unTrackedDeviceIndexInvalid) // Left controller is assigned but right is missing
         {
-            Log("Found Controller ( Device: " + _leftIndex + " ): Left");
+            Log("Found Controller ( Device: {0} ): Left", _leftIndex);
             for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
             {
                 if (i == _leftIndex || system.GetTrackedDeviceClass(i) != ETrackedDeviceClass.Controller)
@@ -135,13 +146,13 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
                 }
                 _rightIndex = i;
                 CallIndexChanged(ETrackedControllerRole.RightHand, _rightIndex);
-                Log("Found Controller ( Device: " + _rightIndex + " ): Right");
+                Log("Found Controller ( Device: {0} ): Right", _rightIndex);
                 break;
             }
         }
         else if (_leftIndex == OpenVR.k_unTrackedDeviceIndexInvalid && _rightIndex != OpenVR.k_unTrackedDeviceIndexInvalid) // Right controller is assigned but left is missing
         {
-            Log("Found Controller ( Device: " + _rightIndex + " ): Right");
+            Log("Found Controller ( Device: {0} ): Right", _rightIndex);
             for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
             {
                 if (i == _rightIndex || system.GetTrackedDeviceClass(i) != ETrackedDeviceClass.Controller)
@@ -150,7 +161,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
                 }
                 _leftIndex = i;
                 CallIndexChanged(ETrackedControllerRole.LeftHand, _leftIndex);
-                Log("Found Controller ( Device: " + _leftIndex + " ): Left");
+                Log("Found Controller ( Device: {0} ): Left", _leftIndex);
                 break;
             }
         }
@@ -169,17 +180,17 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
                 switch (system.GetControllerRoleForTrackedDeviceIndex(i))
                 {
                     case ETrackedControllerRole.LeftHand:
-                        Log("Found Controller ( Device: " + i + " ): Left");
                         _leftIndex = i;
+                        Log("Found Controller ( Device: {0} ): Left", _leftIndex);
                         CallIndexChanged(ETrackedControllerRole.LeftHand, _leftIndex);
                         break;
                     case ETrackedControllerRole.RightHand:
-                        Log("Found Controller ( Device: " + i + " ): Right");
                         _rightIndex = i;
+                        Log("Found Controller ( Device: {0} ): Right", _rightIndex);
                         CallIndexChanged(ETrackedControllerRole.RightHand, _rightIndex);
                         break;
                     case ETrackedControllerRole.Invalid:
-                        Log("Found Controller ( Device: " + i + " ): Unassigned");
+                        Log("Found Controller ( Device: {0} ): Unassigned", i);
                         if (foundUnassigned <= 1)
                             slots[foundUnassigned++] = i;
                         break;
@@ -216,6 +227,12 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
                     break;
                 case 0:
                     LogWarning("Couldn't Find Any Unassigned Controllers!");
+                    _noControllersCount++;
+                    if (_noControllersCount >= 10)
+                    {
+                        LogError("Controllers not found!");
+                        LogError("Please connect the controllers and restart!");
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -242,16 +259,26 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
     /// This is just used to quickly enable/disable Log messages.
     /// </summary>
     /// <param name="text"></param>
-    void Log(string text)
+    void Log(string text, params object[] vars)
     {
-        TwitchChatTester.Instance.AddSystemNotice(text);
+        TwitchChatTester.Instance.AddSystemNotice(vars == null ? text : string.Format(text, vars));
     }
+
     /// <summary>
     /// This is just used to quickly enable/disable LogWarning messages.
     /// </summary>
     /// <param name="text"></param>
-    void LogWarning(string text)
+    void LogWarning(string text, params object[] vars)
     {
-        TwitchChatTester.Instance.AddSystemNotice(text, TwitchIRC.NoticeColor.Yellow);
+        TwitchChatTester.Instance.AddSystemNotice(vars == null ? text : string.Format(text, vars), TwitchIRC.NoticeColor.Yellow);
+    }
+
+    /// <summary>
+    /// This is just used to quickly enable/disable LogError messages.
+    /// </summary>
+    /// <param name="text"></param>
+    void LogError(string text, params object[] vars)
+    {
+        TwitchChatTester.Instance.AddSystemNotice(vars == null ? text : string.Format(text, vars), TwitchIRC.NoticeColor.Red);
     }
 }

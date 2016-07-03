@@ -1,14 +1,2 @@
 Base path: C:/Program Files/Unity 5.3.5f1/Editor/Data
 Cmd: getPlatforms
-Cmd: compileSnippet
-  api=8 type=0 insize=681 outsize=493 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
-Cmd: compileSnippet
-  api=8 type=1 insize=681 outsize=409 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
-Cmd: compileSnippet
-  api=8 type=0 insize=688 outsize=493 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
-Cmd: compileSnippet
-  api=8 type=1 insize=472 outsize=321 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
-Cmd: compileSnippet
-  api=8 type=0 insize=818 outsize=569 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
-Cmd: compileSnippet
-  api=8 type=1 insize=818 outsize=373 kw= pd=UNITY_NO_LINEAR_COLORSPACE UNITY_ENABLE_REFLECTION_BUFFERS UNITY_PBS_USE_BRDF3 ok=1
