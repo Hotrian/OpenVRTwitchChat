@@ -54,6 +54,6 @@ Thanks to Grahnz for the base [TwitchIRC.cs](https://github.com/Grahnz/TwitchIRC
 
 Thanks to [Eric Daily](http://tutsplus.com/authors/eric-daily) for the base [SaveLoad](http://gamedevelopment.tutsplus.com/tutorials/how-to-save-and-load-your-players-progress-in-unity--cms-20934) script! The license file is available [here](../master/SaveLoad-LICENSE.txt).
 
-Thanks to [Jalastram](https://www.freesound.org/people/jalastram/) for some of their sounds! The license file for these can be found [here](../master/Assets/Resources/Twitch/Sounds/GUI Sound Effects/LICENSE.txt).
+Thanks to [Jalastram](https://www.freesound.org/people/jalastram/) for some of their sounds! The license file for these can be found [here](../master/Assets/StreamingAssets/Twitch/Sounds/GUI Sound Effects/LICENSE.txt).
 
 Thanks to everyone who has tested it so far! The feedback has really helped speed things along!

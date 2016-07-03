@@ -6,7 +6,7 @@ using UnityEngine;
 [System.Serializable]
 public class TwitchSettings
 {
-    public const uint CurrentSaveVersion = 1;
+    public const uint CurrentSaveVersion = 2;
 
     public uint SaveFileVersion;
 

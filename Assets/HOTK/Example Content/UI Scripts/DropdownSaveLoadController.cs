@@ -148,7 +148,7 @@ public class DropdownSaveLoadController : MonoBehaviour
             PitchSlider.Slider.value = settings.Pitch;
             PitchSlider.OnSliderEndDrag(false);
         }
-        ChatSoundDropdown.SetToOption(settings.SaveFileVersion >= 1 ? settings.ChatSound : "gui-sound-effects-031", true); // Save File compatability
+        ChatSoundDropdown.SetToOption(settings.SaveFileVersion >= 1 ? (settings.SaveFileVersion >= 2 ? settings.ChatSound : settings.ChatSound + ".wav") : "gui-sound-effects-031.wav", true); // Save File compatability
 
         DeviceDropdown.SetToOption(settings.Device.ToString());
         PointDropdown.SetToOption(settings.Point.ToString());
