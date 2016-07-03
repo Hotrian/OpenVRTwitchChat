@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{CCECC27C-28B2-EE5B-B0F8-36B149125DE4}</ProjectGuid>
+    <ProjectGuid>{C9B00BAD-F459-C32D-C018-DA708348DB20}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Assembly-CSharp</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -63,9 +63,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="OpenVRTwitchChat.CSharp.Plugins.csproj">
-      <Project>{CF3A2ED3-EF5F-DE6E-1CFB-0A704550BB44}</Project>
-      <Name>OpenVRTwitchChat.CSharp.Plugins</Name>
+    <ProjectReference Include="OpenVRTwitchChat-master.CSharp.Plugins.csproj">
+      <Project>{C2940402-7FB5-3154-C04F-6BF62914AA24}</Project>
+      <Name>OpenVRTwitchChat-master.CSharp.Plugins</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +86,7 @@
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\RotationMatchInputField.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\RotationMatchSlider.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\ScaleMatchInputField.cs" />
+    <Compile Include="Assets\HOTK\Example Content\UI Scripts\TooltipController.cs" />
     <Compile Include="Assets\HOTK\Example Content\UI Scripts\VolumeMatchSlider.cs" />
     <Compile Include="Assets\HOTK\HOTK_Overlay.cs" />
     <Compile Include="Assets\HOTK\HOTK_TrackedDevice.cs" />

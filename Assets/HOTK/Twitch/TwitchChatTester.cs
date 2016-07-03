@@ -44,7 +44,12 @@ public class TwitchChatTester : MonoBehaviour
     public TextMesh ViewerCountTextMesh;
     public TextMesh ChannelNameTextMesh;
 
-    public AudioSource IncomingMessageSound;
+    public AudioSource IncomingMessageSoundSource1;
+    public AudioSource IncomingMessageSoundSource2;
+    public AudioSource IncomingMessageSoundSource3;
+    public AudioSource IncomingMessageSoundSource4;
+    public AudioSource IncomingMessageSoundSource5;
+    public AudioSource IncomingMessageSoundSource6;
 
     public TwitchIRC IRC
     {
@@ -212,9 +217,49 @@ public class TwitchChatTester : MonoBehaviour
                 break;
             case "PRIVMSG":
                 AddMsg(FirstLetterToUpper(nickname), TwitchIRC.GetUserColor(nickname), chat);
-                if (IncomingMessageSound != null && IncomingMessageSound.clip != null) IncomingMessageSound.Play();
+                PlayMessageSound();
                 break;
         }
+    }
+
+    public void SetMessagePitch(float pitch)
+    {
+        IncomingMessageSoundSource1.pitch = pitch;
+        IncomingMessageSoundSource2.pitch = pitch;
+        IncomingMessageSoundSource3.pitch = pitch;
+        IncomingMessageSoundSource4.pitch = pitch;
+        IncomingMessageSoundSource5.pitch = pitch;
+        IncomingMessageSoundSource6.pitch = pitch;
+    }
+
+    public void SetMessageSound(AudioClip sound)
+    {
+        IncomingMessageSoundSource1.clip = sound;
+        IncomingMessageSoundSource2.clip = sound;
+        IncomingMessageSoundSource3.clip = sound;
+        IncomingMessageSoundSource4.clip = sound;
+        IncomingMessageSoundSource5.clip = sound;
+        IncomingMessageSoundSource6.clip = sound;
+    }
+
+    public void SetMessageVolume(float volume)
+    {
+        IncomingMessageSoundSource1.volume = volume;
+        IncomingMessageSoundSource2.volume = volume;
+        IncomingMessageSoundSource3.volume = volume;
+        IncomingMessageSoundSource4.volume = volume;
+        IncomingMessageSoundSource5.volume = volume;
+        IncomingMessageSoundSource6.volume = volume;
+    }
+
+    public void PlayMessageSound()
+    {
+        if (IncomingMessageSoundSource1 != null && IncomingMessageSoundSource1.clip != null && !IncomingMessageSoundSource1.isPlaying) IncomingMessageSoundSource1.Play();
+        else if (IncomingMessageSoundSource2 != null && IncomingMessageSoundSource2.clip != null && !IncomingMessageSoundSource2.isPlaying) IncomingMessageSoundSource2.Play();
+        else if (IncomingMessageSoundSource3 != null && IncomingMessageSoundSource3.clip != null && !IncomingMessageSoundSource3.isPlaying) IncomingMessageSoundSource3.Play();
+        else if (IncomingMessageSoundSource4 != null && IncomingMessageSoundSource4.clip != null && !IncomingMessageSoundSource4.isPlaying) IncomingMessageSoundSource4.Play();
+        else if (IncomingMessageSoundSource5 != null && IncomingMessageSoundSource5.clip != null && !IncomingMessageSoundSource5.isPlaying) IncomingMessageSoundSource5.Play();
+        else if (IncomingMessageSoundSource6 != null && IncomingMessageSoundSource6.clip != null) IncomingMessageSoundSource6.Play();
     }
 
     public void AddSystemNotice(string msgIn, TwitchIRC.NoticeColor colorEnum = TwitchIRC.NoticeColor.Blue)

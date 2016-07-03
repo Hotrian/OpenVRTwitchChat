@@ -4,8 +4,6 @@ using UnityEngine.UI;
 [RequireComponent(typeof (Slider))]
 public class VolumeMatchSlider : MonoBehaviour
 {
-    public AudioSource AudioSource;
-
     public Slider Slider
     {
         get { return _slider ?? (_slider = GetComponent<Slider>()); }
@@ -15,13 +13,12 @@ public class VolumeMatchSlider : MonoBehaviour
 
     public void OnSliderChanged()
     {
-        if (AudioSource == null) return;
-        AudioSource.volume = Slider.value;
+        TwitchChatTester.Instance.SetMessageVolume(Slider.value);
     }
 
     public void OnSliderEndDrag(bool playSound = true)
     {
         OnSliderChanged();
-        if (playSound && AudioSource != null && AudioSource.clip != null) AudioSource.Play();
+        if (playSound) TwitchChatTester.Instance.PlayMessageSound();
     }
 }

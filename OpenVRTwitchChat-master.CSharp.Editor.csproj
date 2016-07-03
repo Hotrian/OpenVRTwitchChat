@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{1163825A-00DA-A41F-E657-14B5F57E215D}</ProjectGuid>
+    <ProjectGuid>{984A7BBC-0547-6069-7319-BD4C049590FE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Assembly-CSharp-Editor</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -90,13 +90,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="OpenVRTwitchChat.CSharp.Plugins.csproj">
-      <Project>{CF3A2ED3-EF5F-DE6E-1CFB-0A704550BB44}</Project>
-      <Name>OpenVRTwitchChat.CSharp.Plugins</Name>
+    <ProjectReference Include="OpenVRTwitchChat-master.CSharp.Plugins.csproj">
+      <Project>{C2940402-7FB5-3154-C04F-6BF62914AA24}</Project>
+      <Name>OpenVRTwitchChat-master.CSharp.Plugins</Name>
     </ProjectReference>
-    <ProjectReference Include="OpenVRTwitchChat.CSharp.csproj">
-      <Project>{CCECC27C-28B2-EE5B-B0F8-36B149125DE4}</Project>
-      <Name>OpenVRTwitchChat.CSharp</Name>
+    <ProjectReference Include="OpenVRTwitchChat-master.CSharp.csproj">
+      <Project>{C9B00BAD-F459-C32D-C018-DA708348DB20}</Project>
+      <Name>OpenVRTwitchChat-master.CSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

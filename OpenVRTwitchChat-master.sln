@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVRTwitchChat-master.CSharp.Plugins", "OpenVRTwitchChat-master.CSharp.Plugins.csproj", "{C2940402-7FB5-3154-C04F-6BF62914AA24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVRTwitchChat-master.CSharp", "OpenVRTwitchChat-master.CSharp.csproj", "{C9B00BAD-F459-C32D-C018-DA708348DB20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVRTwitchChat-master.CSharp.Editor", "OpenVRTwitchChat-master.CSharp.Editor.csproj", "{984A7BBC-0547-6069-7319-BD4C049590FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2940402-7FB5-3154-C04F-6BF62914AA24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2940402-7FB5-3154-C04F-6BF62914AA24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2940402-7FB5-3154-C04F-6BF62914AA24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2940402-7FB5-3154-C04F-6BF62914AA24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9B00BAD-F459-C32D-C018-DA708348DB20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9B00BAD-F459-C32D-C018-DA708348DB20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9B00BAD-F459-C32D-C018-DA708348DB20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9B00BAD-F459-C32D-C018-DA708348DB20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{984A7BBC-0547-6069-7319-BD4C049590FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{984A7BBC-0547-6069-7319-BD4C049590FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{984A7BBC-0547-6069-7319-BD4C049590FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{984A7BBC-0547-6069-7319-BD4C049590FE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

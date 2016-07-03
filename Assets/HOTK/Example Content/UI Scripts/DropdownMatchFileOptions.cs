@@ -8,9 +8,7 @@ using System.Linq;
 public class DropdownMatchFileOptions : MonoBehaviour
 {
     public string RelativeFolderToReadFrom;
-
-    public AudioSource CameraAudioSource;
-
+    
     public Dropdown Dropdown
     {
         get { return _dropdown ?? (_dropdown = GetComponent<Dropdown>()); }
@@ -34,9 +32,8 @@ public class DropdownMatchFileOptions : MonoBehaviour
         var sound = Resources.Load(RelativeFolderToReadFrom + "/" + Dropdown.options[Dropdown.value].text) as AudioClip;
         if (sound != null)
         {
-            if (CameraAudioSource == null) return;
-            CameraAudioSource.clip = sound;
-            CameraAudioSource.Play();
+            TwitchChatTester.Instance.SetMessageSound(sound);
+            TwitchChatTester.Instance.PlayMessageSound();
         }
         else
         {
@@ -48,8 +45,7 @@ public class DropdownMatchFileOptions : MonoBehaviour
     {
         if (Dropdown.options[Dropdown.value].text == val)
         {
-            if (!forceSound || CameraAudioSource == null) return true;
-            CameraAudioSource.Play();
+            if (forceSound) TwitchChatTester.Instance.PlayMessageSound();
             return true;
         }
 
