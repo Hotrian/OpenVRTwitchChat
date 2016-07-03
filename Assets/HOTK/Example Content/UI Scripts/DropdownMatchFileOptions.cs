@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
@@ -31,6 +30,7 @@ public class DropdownMatchFileOptions : MonoBehaviour
         {
             if (Dropdown.options[i].text != "gui-sound-effects-004.wav") continue;
             Dropdown.value = i;
+            if (i == 0) _firstLoad = false;
             break;
         }
     }
