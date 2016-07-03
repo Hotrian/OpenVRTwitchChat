@@ -142,9 +142,6 @@ public class DropdownSaveLoadController : MonoBehaviour
         {
             VolumeSlider.Slider.value = settings.Volume;
             VolumeSlider.OnSliderEndDrag(false);
-        }
-        if (settings.SaveFileVersion >= 1) // Save File compatability
-        {
             PitchSlider.Slider.value = settings.Pitch;
             PitchSlider.OnSliderEndDrag(false);
         }
