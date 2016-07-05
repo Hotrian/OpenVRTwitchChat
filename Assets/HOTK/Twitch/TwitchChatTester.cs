@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(TwitchIRC), typeof(TextMesh))]
 public class TwitchChatTester : MonoBehaviour
@@ -98,7 +99,7 @@ public class TwitchChatTester : MonoBehaviour
                         ConnectButtonText.text = "Press to Disconnect";
 
                         Connected = true;
-                        OnChatMsg(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelFirstLetterToUpper(ChannelBox.text), FirstLetterToUpper(UsernameBox.text))));
+                        OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelFirstLetterToUpper(ChannelBox.text), FirstLetterToUpper(UsernameBox.text)))));
                         IRC.NickName = UsernameBox.text;
                         IRC.Oauth = OAuthBox.text;
                         IRC.ChannelName = ChannelBox.text.Trim().ToLower();
@@ -124,7 +125,7 @@ public class TwitchChatTester : MonoBehaviour
             Connected = false;
             IRC.MessageRecievedEvent.RemoveListener(OnChatMsg);
             IRC.enabled = false;
-            OnChatMsg(TwitchIRC.ToTwitchNotice("Disconnected!", TwitchIRC.NoticeColor.Red));
+            OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice("Disconnected!", TwitchIRC.NoticeColor.Red)));
             StopCoroutine("UpdateViews");
             ClearViewerCountAndChannelName("Disconnected");
         }
@@ -174,8 +175,16 @@ public class TwitchChatTester : MonoBehaviour
         if (ViewerCountTextMesh != null) ViewerCountTextMesh.text = "";
     }
 
-    private void OnChatMsg(string msg)
+    private void OnChatMsg(TwitchIRC.TwitchMessage message)
     {
+        if (message.Emotes != null)
+        {
+            if (message.Emotes.Count > 0)
+            {
+                Debug.Log("Caught " + message.Emotes.Count + " Emotes!");
+            }
+        }
+        var msg = message.Message;
         var cmd = msg.Split(' ');
         var nickname = cmd[0].Split('!')[0].Substring(1);
         var mode = cmd[1];
@@ -290,7 +299,7 @@ public class TwitchChatTester : MonoBehaviour
 
     public void AddSystemNotice(string msgIn, TwitchIRC.NoticeColor colorEnum = TwitchIRC.NoticeColor.Blue)
     {
-        OnChatMsg(TwitchIRC.ToNotice("System", msgIn, colorEnum));
+        OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToNotice("System", msgIn, colorEnum)));
     }
 
     private void AddMsg(string nickname, string color, string chat)

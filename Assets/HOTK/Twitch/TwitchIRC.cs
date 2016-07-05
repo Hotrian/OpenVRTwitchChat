@@ -14,13 +14,13 @@ public class TwitchIRC : MonoBehaviour
     private const int Port = 6667;
 
     //event(buffer).
-    public class MsgEvent : UnityEngine.Events.UnityEvent<string> { }
+    public class MsgEvent : UnityEngine.Events.UnityEvent<TwitchMessage> { }
     public MsgEvent MessageRecievedEvent = new MsgEvent();
 
     private string _buffer = string.Empty;
     private bool _stopThreads;
     private readonly Queue<string> _commandQueue = new Queue<string>();
-    private readonly List<string> _recievedMsgs = new List<string>();
+    private readonly List<TwitchMessage> _recievedMsgs = new List<TwitchMessage>();
     private System.Threading.Thread _inProc, _outProc;
 
     private static readonly Dictionary<string, string> UserColors = new Dictionary<string, string>();
@@ -70,11 +70,11 @@ public class TwitchIRC : MonoBehaviour
         {
             if (!_loggedin)
             {
-                _recievedMsgs.Add(ToNotice("System", "Should be logged in by now.. are the username and oauth correct?", NoticeColor.Yellow));
+                _recievedMsgs.Add(new TwitchMessage(ToNotice("System", "Should be logged in by now.. are the username and oauth correct?", NoticeColor.Yellow)));
             }
             else if (!_connected)
             {
-                _recievedMsgs.Add(ToNotice("System", "Should be connected by now.. is the channel name correct?", NoticeColor.Yellow));
+                _recievedMsgs.Add(new TwitchMessage(ToNotice("System", "Should be connected by now.. is the channel name correct?", NoticeColor.Yellow)));
             }
         }
     }
@@ -93,10 +93,11 @@ public class TwitchIRC : MonoBehaviour
 
                 _buffer = input.ReadLine();
                 if (_buffer == null) continue;
-                //Debug.Log(_buffer);
+                Debug.Log(_buffer);
 
                 string[] tokens;
                 string message;
+                List<EmoteKey> emoteKeys = null;
                 if (_buffer.StartsWith("@"))
                 {
                     var split = _buffer.IndexOf(' ');
@@ -107,12 +108,16 @@ public class TwitchIRC : MonoBehaviour
                     var username = tokens[0].Split('!')[0].Substring(1);
                     var keys = userstate.Split(';');
 
+                    emoteKeys = new List<EmoteKey>();
+
                     foreach (var k in keys)
                     {
-                        if (k.StartsWith("color="))
+                        var key = k;
+                        if (key.StartsWith("@")) key = key.Substring(1);
+                        if (key.StartsWith("color="))
                         {
                             if (GetUserColor(username) != DefaultChatNameColor) continue;
-                            var color = (k != "color=") ? k.Substring(7) : null;
+                            var color = (key != "color=") ? key.Substring(7) : null;
                             if (string.IsNullOrEmpty(color))
                             {
                                 var r = Mathf.Max(0.25f, Random.Next(0, 100)/100f);
@@ -125,6 +130,53 @@ public class TwitchIRC : MonoBehaviour
                                 UserColors.Add(username, color);
                             }
                         }
+                        else if (key.StartsWith("emotes="))
+                        {
+                            var emotes = key.Substring(7).Split('/');
+                            foreach (var emote in emotes)
+                            {
+                                var emoteSplit = emote.IndexOf(":");
+                                if (emoteSplit == -1) continue; // No emotes sent
+                                var emoteId = int.Parse(emote.Substring(0, emoteSplit));
+                                var emotePos = emote.Substring(emoteSplit + 1);
+                                var emotePoses = emotePos.Split(',');
+                                foreach (var emoteP in emotePoses)
+                                {
+                                    var emoteTokens = emoteP.Split('-');
+                                    var emoteStart = int.Parse(emoteTokens[0]);
+                                    var emoteEnd = int.Parse(emoteTokens[1]) + 1;
+
+                                    emoteKeys.Add(new EmoteKey(emoteId, emoteStart, emoteEnd));
+                                    Debug.Log(string.Format("Used emote {0} from {1} to {2}", emoteId, emoteStart, emoteEnd));
+                                }
+                            }
+                        }
+                    }
+
+                    emoteKeys.Sort((a, b) => a.EmoteStart.CompareTo(b.EmoteStart));
+
+                    if (emoteKeys.Count > 0)
+                    {
+                        var messageSplit = message.Substring(1).IndexOf(':');
+                        var messageHeader = message.Substring(0, messageSplit);
+                        var messageBody = message.Substring(messageSplit + 2);
+
+                        Debug.Log("Header: " + messageHeader);
+                        Debug.Log("Body: " + messageBody);
+                        for (var i = 0; i < emoteKeys.Count; i++)
+                        {
+                            var len = emoteKeys[i].EmoteEnd - emoteKeys[i].EmoteStart;
+                            Debug.Log(string.Format("Removing {0} to {1} from {2}", emoteKeys[i].EmoteStart, len, messageBody));
+                            messageBody = messageBody.Remove(emoteKeys[i].EmoteStart, len);
+                            for (var j = i; j < emoteKeys.Count; j++)
+                            {
+                                emoteKeys[j].EmoteStart -= len;
+                                emoteKeys[j].EmoteEnd -= len;
+                            }
+                        }
+
+                        message = messageHeader + " :" + messageBody;
+                        Debug.Log(message);
                     }
                 }
                 else
@@ -139,20 +191,20 @@ public class TwitchIRC : MonoBehaviour
                     case "NOTICE":
                         lock (_recievedMsgs)
                         {
-                            _recievedMsgs.Add(message);
+                            _recievedMsgs.Add(new TwitchMessage(message, emoteKeys));
                         }
                         break;
                     case "JOIN":
                         lock (_recievedMsgs)
                         {
-                            _recievedMsgs.Add(ToTwitchNotice(string.Format("Connected to {0}!", tokens[2])));
+                            _recievedMsgs.Add(new TwitchMessage(ToTwitchNotice(string.Format("Connected to {0}!", tokens[2]))));
                             _connected = true;
                         }
                         break;
                     case "001":
                         lock (_recievedMsgs)
                         {
-                            _recievedMsgs.Add(ToTwitchNotice("Logged in! Connecting to chat.."));
+                            _recievedMsgs.Add(new TwitchMessage(ToTwitchNotice("Logged in! Connecting to chat..")));
                             _loggedin = true;
                         }
                         SendCommand("CAP REQ :twitch.tv/tags");
@@ -162,7 +214,7 @@ public class TwitchIRC : MonoBehaviour
                     case "CAP":
                         lock (_recievedMsgs)
                         {
-                            _recievedMsgs.Add(ToTwitchNotice("Acknowledging Client Capabilities!"));
+                            _recievedMsgs.Add(new TwitchMessage(ToTwitchNotice("Acknowledging Client Capabilities!")));
                         }
                         break;
                     case "USERSTATE":
@@ -177,9 +229,10 @@ public class TwitchIRC : MonoBehaviour
             }
             catch (Exception e)
             {
+                Debug.LogException(e);
                 lock (_recievedMsgs)
                 {
-                    _recievedMsgs.Add(ToNotice("EXCEPTION", e.ToString(), NoticeColor.Red));
+                    _recievedMsgs.Add(new TwitchMessage(ToNotice("EXCEPTION", e.ToString(), NoticeColor.Red)));
                 }
             }
         }
@@ -326,5 +379,37 @@ public class TwitchIRC : MonoBehaviour
         Yellow,
         Purple,
         White
+    }
+
+    public struct TwitchMessage
+    {
+        public readonly string Message;
+        public readonly List<EmoteKey> Emotes;
+
+        public TwitchMessage(string message)
+        {
+            Message = message;
+            Emotes = null;
+        }
+
+        public TwitchMessage(string message, List<EmoteKey> emotes)
+        {
+            Message = message;
+            Emotes = emotes;
+        }
+    }
+
+    public class EmoteKey
+    {
+        public readonly int EmoteId;
+        public int EmoteStart;
+        public int EmoteEnd;
+
+        public EmoteKey(int id, int start, int end)
+        {
+            EmoteId = id;
+            EmoteStart = start;
+            EmoteEnd = end;
+        }
     }
 }
