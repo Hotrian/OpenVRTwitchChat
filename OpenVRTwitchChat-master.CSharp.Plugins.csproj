@@ -66,11 +66,11 @@
     <Compile Include="Assets\Plugins\openvr_api.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Resources\Twitch\Sounds\GUI Sound Effects\LICENSE.txt" />
     <None Include="Assets\SteamVR\Resources\SteamVR_Blit.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_BlitFlip.shader" />
     <None Include="Assets\SteamVR\Resources\SteamVR_HiddenArea.shader" />
     <None Include="Assets\SteamVR\readme.txt" />
+    <None Include="Assets\StreamingAssets\Twitch\Sounds\GUI Sound Effects\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
