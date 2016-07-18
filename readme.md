@@ -17,13 +17,14 @@ We're receiving reports that some Rift users find some games are incompatible wi
 - Basic Save/Load Support! Saves all settings _except_ OAuth Key!
 - Notification Sound on Chat Message Received (Set Volume to 0 to Disable)
 - Active Viewer Count (Updated as often as Twitch allows)
+- "Experimental" Emote Support ;) ![kappa](http://static-cdn.jtvnw.net/emoticons/v1/25/1.0) ![kappa](http://static-cdn.jtvnw.net/emoticons/v1/25/1.0)
 
 ## Basic Controls
-(click to enlarge)
+(click to enlarge) (actual controls might vary slightly as this is still under development)
 ![basic controls](http://image.prntscr.com/image/224cbd14d02f4e209879ef9d5f647be2.png)
 
 ## Demos
-Note that these demos were taken during development, and do not necessarily represent the current state of the branch.
+Note that these demos are a bit old, and do not represent the current state of the branch.
 - ![Here is a GIF](https://thumbs.gfycat.com/SinfulHonestGenet-size_restricted.gif)
 - Please see this [higher quality view of the GIF above](https://gfycat.com/SinfulHonestGenet) of the Twitch Chat in action!
 - [Check out this Youtube Video](https://www.youtube.com/watch?v=JMk7Vy1Zq_s) which shows the desktop UI in action!
@@ -43,7 +44,7 @@ Note that these demos were taken during development, and do not necessarily repr
 - You can put the Overlay up in the sky and tilt it if you don't like it on the controllers and find it obtrusive in the world. Just set the Base Position to "World", then mess with the middle "Positional Control" slider and the top "Rotational Control" slider until you find a position that works for you :)
 - You can stream the Display Mirror if you want your viewers to be able to see the Overlay, or you can stream the game's output if you do not.
 - To save a new settings profile, select "New.." from the dropdown and press "Save", then enter a name in the box just below and press the new "Save" button.
-- There isn't currently a button to delete profiles :P You can delete them by navigating to "C:\Users\\\<USERNAME\>\AppData\LocalLow\HeadlessOverlayToolkit\TwitchChatOverlay\" and deleting the file "savedSettings.gd". Sorry for the inconvenience.
+- To delete a profile, select the profile you want to delete from the dropdown box, and click the Delete button twice. On the first click the text will change red and the tooltip will change. On second click the profile will be deleted. There is no undo so use this wisely. Select a different profile or press Load or Save to reset the Delete button.
 - You can disable Chat Notification Sounds by setting the Volume slider to 0.
 
 ## How can I help?
