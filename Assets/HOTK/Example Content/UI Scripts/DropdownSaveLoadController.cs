@@ -31,6 +31,7 @@ public class DropdownSaveLoadController : MonoBehaviour
     public MaterialColorMatchSlider RSlider;
     public MaterialColorMatchSlider GSlider;
     public MaterialColorMatchSlider BSlider;
+    public MaterialColorMatchSlider ASlider;
 
     public InputField AlphaStartField;
     public InputField AlphaEndField;
@@ -154,6 +155,7 @@ public class DropdownSaveLoadController : MonoBehaviour
         RSlider.Slider.value = settings.BackgroundR;
         GSlider.Slider.value = settings.BackgroundG;
         BSlider.Slider.value = settings.BackgroundB;
+        ASlider.Slider.value = (settings.SaveFileVersion >= 3 ? settings.BackgroundA : 1.0f); // Save File compatability
 
         AlphaStartField.text = settings.AlphaStart.ToString();
         AlphaEndField.text = settings.AlphaEnd.ToString();
@@ -197,14 +199,21 @@ public class DropdownSaveLoadController : MonoBehaviour
             settings.Point = OverlayToSave.AnchorPoint;
             settings.Animation = OverlayToSave.AnimateOnGaze;
 
-            settings.BackgroundR = BackgroundMaterial.color.r;
-            settings.BackgroundG = BackgroundMaterial.color.g;
-            settings.BackgroundB = BackgroundMaterial.color.b;
+            var backgroundColor = GetMaterialTexture().GetPixel(0, 0);
+            settings.BackgroundR = backgroundColor.r;
+            settings.BackgroundG = backgroundColor.g;
+            settings.BackgroundB = backgroundColor.b;
+            settings.BackgroundA = backgroundColor.a;
 
             settings.AlphaStart = OverlayToSave.Alpha; settings.AlphaEnd = OverlayToSave.Alpha2; settings.AlphaSpeed = OverlayToSave.AlphaSpeed;
             settings.ScaleStart = OverlayToSave.Scale; settings.ScaleEnd = OverlayToSave.Scale2; settings.ScaleSpeed = OverlayToSave.ScaleSpeed;
             TwitchSettingsSaver.Save();
         }
+    }
+
+    private Texture2D GetMaterialTexture()
+    {
+        return (Texture2D)(BackgroundMaterial.mainTexture ?? (BackgroundMaterial.mainTexture = TwitchChatTester.GenerateBaseTexture()));
     }
 
     public void OnSaveNewPressed()

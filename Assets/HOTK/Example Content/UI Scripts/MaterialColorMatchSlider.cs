@@ -17,7 +17,7 @@ public class MaterialColorMatchSlider : MonoBehaviour
     public void OnEnable()
     {
         if (Material == null) return;
-        var c = Material.color;
+        var c = GetMaterialTexture().GetPixel(0,0);
         switch (Setting)
         {
             case ColorSetting.R:
@@ -29,15 +29,24 @@ public class MaterialColorMatchSlider : MonoBehaviour
             case ColorSetting.B:
                 Slider.value = c.b;
                 break;
+            case ColorSetting.A:
+                Slider.value = c.a;
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
 
+    private Texture2D GetMaterialTexture()
+    {
+        return (Texture2D) (Material.mainTexture ?? (Material.mainTexture = TwitchChatTester.GenerateBaseTexture()));
+    }
+
     public void OnValueChanges()
     {
         if (Material == null) return;
-        var c = Material.color;
+        var tex = GetMaterialTexture();
+        var c = tex.GetPixel(0, 0);
         switch (Setting)
         {
             case ColorSetting.R:
@@ -49,11 +58,15 @@ public class MaterialColorMatchSlider : MonoBehaviour
             case ColorSetting.B:
                 c.b = Slider.value;
                 break;
+            case ColorSetting.A:
+                c.a = Slider.value;
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
-        Material.color = c;
+        tex.SetPixel(0, 0, c);
+        tex.Apply();
     }
 
     public enum ColorSetting
@@ -61,5 +74,6 @@ public class MaterialColorMatchSlider : MonoBehaviour
         R,
         G,
         B,
+        A,
     }
 }

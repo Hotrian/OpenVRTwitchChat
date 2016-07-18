@@ -14,22 +14,9 @@ public class TwitchChatTester : MonoBehaviour
     {
         get { return _instance ?? (_instance = FindObjectOfType<TwitchChatTester>()); }
     }
-
     private static TwitchChatTester _instance;
 
-    public struct TwitchChat
-    {
-        public readonly string Name;
-        public readonly string Color;
-        public readonly string Message;
-
-        public TwitchChat(string name, string color, string message)
-        {
-            Name = name;
-            Color = color;
-            Message = message;
-        }
-    }
+    public int ChatLineCount = 27; // Max line count for our display
 
     public InputField UsernameBox;
     public InputField OAuthBox;
@@ -37,15 +24,23 @@ public class TwitchChatTester : MonoBehaviour
     public Button ConnectButton;
     public Text ConnectButtonText;
 
-    public TextMesh TextMesh
+    public TextMesh TextMesh // Used to check each message as it's being built to WordWrap each message into lines
     {
         get { return _textMesh ?? (_textMesh = GetComponent<TextMesh>()); }
     }
     private TextMesh _textMesh;
 
+    public GameObject TextMeshBase; // Cloned into ChatTextMeshes
+
+    private bool _hasGeneratedTextMeshes = false;
+    public TextMesh[] ChatTextMeshes; // Each one of these is a line on our Chat Display
+    public Renderer[] ChatTextRenderers; // Each one of these is a line on our Chat Display
+    
+    // These are used to display ViewerCount and ChannelName when connected
     public TextMesh ViewerCountTextMesh;
     public TextMesh ChannelNameTextMesh;
 
+    // These are used to play message sounds
     public AudioSource IncomingMessageSoundSource1;
     public AudioSource IncomingMessageSoundSource2;
     public AudioSource IncomingMessageSoundSource3;
@@ -59,7 +54,11 @@ public class TwitchChatTester : MonoBehaviour
     }
     private TwitchIRC _irc;
 
-    private readonly List<TwitchChat> _userChat = new List<TwitchChat>();
+    private readonly List<TwitchChat> _userChat = new List<TwitchChat>(); // Used to store the currect messages on the Chat Display
+
+    private readonly Dictionary<int, Material> _emoteMap = new Dictionary<int, Material>(); // Used temporarily to store the currect emotes on a given line
+
+    private readonly Stopwatch _messageSoundStopwatch = new Stopwatch(); // Used to prevent message sound spamming
 
     public bool Connected
     {
@@ -69,14 +68,13 @@ public class TwitchChatTester : MonoBehaviour
     public void Awake()
     {
         _instance = this;
+        GenChatTexts();
     }
 
     public void Start()
     {
         ClearViewerCountAndChannelName("Disconnected");
     }
-
-    private readonly Stopwatch _messageSoundStopwatch = new Stopwatch(); // Used to prevent message sound spamming
 
     public void ToggleConnect()
     {
@@ -131,6 +129,7 @@ public class TwitchChatTester : MonoBehaviour
         }
     }
 
+    // Update the view count as often as possible
     IEnumerator UpdateViews()
     {
         while (Connected && IRC.ChannelName.Length > 0)
@@ -168,29 +167,22 @@ public class TwitchChatTester : MonoBehaviour
         }
     }
 
+    // Reset the channel and viewer text
     private void ClearViewerCountAndChannelName(string channelText = null)
     {
-
         if (ChannelNameTextMesh != null) ChannelNameTextMesh.text = (channelText ?? "");
         if (ViewerCountTextMesh != null) ViewerCountTextMesh.text = "";
     }
 
+    // Process a given message and pass it down the correct channels
     private void OnChatMsg(TwitchIRC.TwitchMessage message)
     {
-        if (message.Emotes != null)
-        {
-            if (message.Emotes.Count > 0)
-            {
-                Debug.Log("Caught " + message.Emotes.Count + " Emotes!");
-            }
-        }
-        var msg = message.Message;
-        var cmd = msg.Split(' ');
+        var cmd = message.Message.Split(' ');
         var nickname = cmd[0].Split('!')[0].Substring(1);
         var mode = cmd[1];
         var channel = cmd[2].Substring(1);
         var len = cmd[0].Length + cmd[1].Length + cmd[2].Length + 4;
-        var chat = msg.Substring(len);
+        var chat = message.Message.Substring(len);
 
         switch (mode)
         {
@@ -228,7 +220,7 @@ public class TwitchChatTester : MonoBehaviour
                 }
                 break;
             case "PRIVMSG":
-                AddMsg(FirstLetterToUpper(nickname), TwitchIRC.GetUserColor(nickname), chat);
+                AddMsg(FirstLetterToUpper(nickname), TwitchIRC.GetUserColor(nickname), chat, message.Emotes);
                 PlayMessageSound();
                 break;
         }
@@ -276,6 +268,7 @@ public class TwitchChatTester : MonoBehaviour
         IncomingMessageSoundSource6.volume = volume;
     }
 
+    // Play a sound on the next free sound player
     public void PlayMessageSound()
     {
         // Prevent the message sound from spamming too rapidly
@@ -297,49 +290,302 @@ public class TwitchChatTester : MonoBehaviour
         else if (IncomingMessageSoundSource6 != null && IncomingMessageSoundSource6.clip != null) IncomingMessageSoundSource6.Play();
     }
 
+    // Add a system message to the chat display
     public void AddSystemNotice(string msgIn, TwitchIRC.NoticeColor colorEnum = TwitchIRC.NoticeColor.Blue)
     {
         OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToNotice("System", msgIn, colorEnum)));
     }
 
-    private void AddMsg(string nickname, string color, string chat)
+    // Add a given message to our list of messages, pushing them to the chat display
+    private void AddMsg(string nickname, string color, string chat, List<TwitchIRC.EmoteKey> emotes = null )
     {
-        _userChat.Add(new TwitchChat(nickname, color, chat));
+        _userChat.Add(new TwitchChat(nickname, color, chat, emotes ?? new List<TwitchIRC.EmoteKey>()));
 
-        while (_userChat.Count > 27)
+        // Remove excess messages
+        while (_userChat.Count > ChatLineCount)
             _userChat.RemoveAt(0);
-        
-        WordWrapText(_userChat);
+
+        StartCoroutine(TwitchEmoteMaterialRecycler.Instance.UpdateEmoteMaterials(this, new TwitchChatUpdate(_userChat.ToArray(), _userChat.SelectMany(d => d.Emotes).ToList().Select(d => d.EmoteId).ToArray())));
     }
 
-    private void WordWrapText(List<TwitchChat> messages)
+    // Generate the TextMeshes if required and wordwrap the given
+    // messages such that they _should_ fit into lines for our TextMeshes
+    public void SetChatMessages(TwitchChatUpdate chatUpdate, TwitchEmoteMaterialRecycler.EmoteMaterial[] mats)
     {
-        var lines = new List<string>();
-        TextMesh.text = "";
-        var ren = TextMesh.GetComponent<Renderer>();
-        var rowLimit = 0.975f; //find the sweet spot
-        foreach (var m in messages)
-        {
-            TextMesh.text = string.Format("<color=#{0}FF>{1}</color>: ", m.Color, m.Name);
-            var builder = "";
-            var parts = m.Message.Split(' ');
-            foreach (var t in parts)
-            {
-                builder = TextMesh.text;
-                TextMesh.text += t + " ";
-                if (ren.bounds.extents.x > rowLimit)
-                {
-                    lines.Add(builder.TrimEnd() + System.Environment.NewLine);
-                    TextMesh.text = t + " ";
-                }
-                builder = TextMesh.text;
-            }
-            lines.Add(builder.TrimEnd() + System.Environment.NewLine);
-        }
-        
-        TextMesh.text = lines.Aggregate("", (current, t) => current + t);
+        GenChatTexts();
+        WordWrapText(chatUpdate.Messages.ToList(), mats);
     }
 
+    private static readonly System.Object BuilderLocker = new System.Object();
+    // Build the given messages and materials into a list of lines for our TextMeshes
+    private void WordWrapText(List<TwitchChat> messages, TwitchEmoteMaterialRecycler.EmoteMaterial[] mats) // TODO: Don't rebuild the #$%^ing list every time we get a message, just push the data along and rebuild the newest line
+    {
+        try
+        {
+            lock (BuilderLocker)
+            {
+                mats = mats.DistinctBy(p => p.Id).ToArray();
+                _emoteMap.Clear();
+                for (var i = 0; i < mats.Length; i++)
+                {
+                    _emoteMap.Add(mats[i].Id, mats[i].Material);
+                }
+                const int maxEmotesPerLine = 7;
+                var lines = new List<LineEmotePair>();
+                TextMesh.text = "";
+                var ren = TextMesh.GetComponent<Renderer>();
+                const float rowLimit = 0.975f; //find the sweet spot
+                var messageEmotes = new List<MaterialIndexPair>[messages.Count];
+                for (var mi = 0; mi < messages.Count; mi++)
+                {
+                    messageEmotes[mi] = new List<MaterialIndexPair>();
+                }
+                for (var mi = 0; mi < messages.Count; mi++)
+                {
+                    var m = messages[mi];
+                    TextMesh.text = string.Format("<color=#{0}FF>{1}</color>: ", m.Color, m.Name);
+                    var builder = "";
+                    var message = m.Message;
+
+                    // Insert the Emotes for this message
+                    if (m.Emotes != null && m.Emotes.Count > 0)
+                    {
+                        var indexIncrease = 0;
+                        var nextIndex = 0;
+                        foreach (var key in m.Emotes)
+                        {
+                            // Cache the emote list so we can have seven unique emotes per message
+                            Material mat;
+                            if (!_emoteMap.TryGetValue(key.EmoteId, out mat)) continue;
+                            var ind = 0;
+                            var foundKey = false;
+                            foreach (var matPair in messageEmotes[mi].Where(matPair => key.EmoteId == matPair.EmoteId))
+                            {
+                                foundKey = true;
+                                ind = matPair.Index;
+                                break;
+                            }
+                            if (!foundKey)
+                            {
+                                ind = nextIndex;
+                                messageEmotes[mi].Add(new MaterialIndexPair(ind, key.EmoteId, mat));
+                                nextIndex++;
+                            }
+                            
+                            var text = string.Format("<quad material={0} size=64 x=0 y=0 width=1 height=1 />", ind);
+                            message = message.Insert(key.EmoteStart + indexIncrease, text);
+                            indexIncrease += text.Length;
+                        }
+                    }
+
+                    // Convert this message into Lines, such that they do not exceed the bounds of the chat box
+                    var buildingQuad = false;
+                    var buildingQuadNow = false;
+                    var quadBuilder = "";
+                    var parts = message.Split(' ');
+                    var lineEmotes = new List<MaterialIndexPair>();
+                    var lineEmoteCount = 0;
+                    var emotes = messageEmotes[mi].ToArray();
+                    var emoteMap = new Dictionary<int, int>();
+                    var currentIndex = -1;
+                    foreach (var t in parts)
+                    {
+                        builder = TextMesh.text;
+                        if (t == "<quad") // This is the beginning of an emote
+                            buildingQuad = true;
+                        if (!buildingQuad)
+                        {
+                            // Add these text pieces 
+                            TextMesh.text += t + " ";
+                            if (ren.bounds.extents.x > rowLimit)
+                            {
+                                lines.Add(new LineEmotePair(builder.TrimEnd(), lineEmotes.ToArray()));
+                                lineEmotes.Clear();
+                                emoteMap.Clear();
+                                lineEmoteCount = 0;
+                                TextMesh.text = t + " ";
+                            }
+                            builder = TextMesh.text;
+                        }
+                        else
+                        {
+                            if (buildingQuadNow || lineEmoteCount < maxEmotesPerLine)
+                            {
+                                buildingQuadNow = true; // Allow an emoji to finish building even if it exceeds the limits
+                                // Here we are constructing the quad used in the TextMesh so that it will display an Emoji
+                                string te;
+                                if (t.StartsWith("material="))
+                                {
+                                    // Remap the materials for this line
+                                    var index = int.Parse(t.Substring(9, 1));
+                                    currentIndex = index;
+                                    int ind;
+                                    if (emoteMap.TryGetValue(index, out ind))
+                                    {
+                                        // This emote was already used on this line
+                                        te = "material=" + ind;
+                                    }
+                                    else
+                                    {
+                                        // This emote is new to this line, we must map it for future use on this line
+                                        lineEmoteCount++;
+                                        lineEmotes.Add(new MaterialIndexPair(lineEmoteCount, emotes[index].EmoteId, emotes[index].Material));
+                                        te = "material=" + lineEmoteCount;
+                                        emoteMap.Add(index, lineEmoteCount);
+                                    }
+                                }
+                                else te = t;
+
+                                quadBuilder += te + " ";
+                                if (t != "/>") continue;
+                                buildingQuad = false;
+                                buildingQuadNow = false;
+                                TextMesh.text += quadBuilder.TrimEnd() + " ";
+
+                                if (currentIndex == -1)
+                                {
+                                    Debug.LogWarning("This shouldn't happen..");
+                                    continue;
+                                }
+                                if (ren.bounds.extents.x > rowLimit)
+                                {
+                                    // This Emoji violates the line's bounds
+                                    // Check if this material belongs on the next line only
+                                    var curId = lineEmotes[lineEmoteCount - 1].EmoteId;
+                                    var count = 0;
+                                    foreach (var emote in lineEmotes.Where(emote => emote.EmoteId == curId))
+                                    {
+                                        count++;
+                                        if (count >= 2)
+                                            break;
+                                    }
+                                    if (count == 1) lineEmotes.RemoveAt(lineEmoteCount - 1); // Remove the last material if it only belongs to this emote
+                                    lines.Add(new LineEmotePair(builder.TrimEnd(), lineEmotes.ToArray())); // Assign the previous working buffer to the last line
+                                    // Push this Emoji to the next line and reconstruct it there
+                                    lineEmotes.Clear();
+                                    emoteMap.Clear();
+
+                                    var nextQuad = "";
+                                    var nexQuadParts = quadBuilder.Split(' ');
+
+                                    lineEmoteCount = 1;
+                                    // Reconstruct this Emoji for the next line
+                                    foreach (var tt in nexQuadParts)
+                                    {
+                                        string tte;
+                                        if (tt.StartsWith("material="))
+                                        {
+                                            tte = "material=" + lineEmoteCount;
+                                        }
+                                        else tte = tt;
+
+                                        nextQuad += tte + " ";
+                                    }
+                                    // Update the Emoji map with the material for the Emoji being pushed to the next line
+                                    lineEmotes.Add(new MaterialIndexPair(lineEmoteCount, emotes[currentIndex].EmoteId, emotes[currentIndex].Material));
+                                    emoteMap.Add(currentIndex, lineEmoteCount);
+                                    currentIndex = -1;
+                                    TextMesh.text = " " + nextQuad.Trim() + " ";
+                                }
+                                // Clear the working buffers
+                                builder = TextMesh.text;
+                                quadBuilder = "";
+                            }
+                            else // Too many emotes on this line, ignore this quad
+                            {
+                                if (t != "/>") continue;
+                                buildingQuad = false;
+                            }
+                        }
+                    }
+                    lines.Add(new LineEmotePair(builder.TrimEnd(), lineEmotes.ToArray())); // Add the final line from the builder to the list of lines
+                }
+                // Clear the builder's text
+                TextMesh.text = "";
+
+                // Remove excess lines
+                while (lines.Count > ChatLineCount)
+                    lines.RemoveAt(0);
+                
+                // Set the Emote materials and TextMesh texts
+                var offset = ChatLineCount - lines.Count;
+                for (var i = 0; i < ChatLineCount; i++)
+                {
+                    if (i >= lines.Count) continue;
+                    SetMaterialSize(ChatTextRenderers[i + offset], lines[i].EmoteList.Length + 1);
+                    for (var j = 0; j < lines[i].EmoteList.Length; j++)
+                    {
+                        SetMaterial(ChatTextRenderers[i + offset], lines[i].EmoteList[j].Index, lines[i].EmoteList[j].Material);
+                    }
+                    ChatTextMeshes[i + offset].text = lines[i].LineText;
+                }
+
+                // Refresh the texts to force them to display correctly
+                foreach (TextMesh t in ChatTextMeshes)
+                {
+                    t.anchor = TextAnchor.UpperLeft;
+                    t.anchor = TextAnchor.LowerLeft;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
+    }
+
+    // Assign a material to a given renderer (used to set Emoji materials)
+    public static void SetMaterial(Renderer ren, int index, Material material)
+    {
+        var mats = ren.sharedMaterials;
+        if (index < 0 || index >= mats.Length) return;
+        mats[index] = material;
+        ren.sharedMaterials = mats;
+    }
+
+    // Set the size of the Materials Array on a given Renderer (used to set Emoji materials)
+    public static void SetMaterialSize(Renderer ren, int count)
+    {
+        if (count < 1) return;
+        // Make new Materials Array
+        var mats = ren.sharedMaterials;
+        var newMats = new Material[count];
+
+        // Copy old Materials Array
+        for (var i = 0; i < Mathf.Min(mats.Length, count); i++)
+        {
+            newMats[i] = mats[i];
+        }
+
+        // Apply new Materials Array
+        ren.sharedMaterials = newMats;
+    }
+
+    private static readonly System.Object GenTextMeshLocker = new System.Object();
+    // Generate our Text Meshes and ensure they are only generated once
+    private void GenChatTexts()
+    {
+        lock (GenTextMeshLocker)
+        {
+            if (_hasGeneratedTextMeshes) return;
+            ChatTextMeshes = new TextMesh[ChatLineCount];
+            ChatTextRenderers = new Renderer[ChatLineCount];
+            for (var i = 0; i < ChatLineCount; i++)
+            {
+                var obj = GameObject.Instantiate(TextMeshBase);
+                ChatTextRenderers[i] = obj.GetComponent<Renderer>();
+                ChatTextMeshes[i] = obj.GetComponent<TextMesh>();
+                ChatTextMeshes[i].text = "";
+                obj.transform.parent = gameObject.transform.parent;
+                obj.transform.localScale = new Vector3(0.005f, 0.005f, 1f);
+                obj.transform.localPosition = new Vector3(-0.5f, 0.465f - (0.0355f * i), -1f);
+                obj.SetActive(true);
+            }
+            _hasGeneratedTextMeshes = true;
+        }
+    }
+
+    // Convert the first letter of the given string to a Capital Letter
     public static string FirstLetterToUpper(string str)
     {
         if (str == null)
@@ -351,6 +597,8 @@ public class TwitchChatTester : MonoBehaviour
         return str.ToUpper();
     }
 
+    // Convert the first letter, and every first letter after an underscore to a Capital Letter
+    // This looks a bit nicer before we have the proper format for this channel name
     public static string ChannelFirstLetterToUpper(string str)
     {
         if (str == null)
@@ -368,9 +616,75 @@ public class TwitchChatTester : MonoBehaviour
         return st;
     }
 
-// These are filled by JsonUtility so the compiler is confused
+    internal static Texture2D GenerateBaseTexture()
+    {
+        var tex = new Texture2D(1, 1);
+        tex.SetPixel(0, 0, new Color(0.45f, 0.2f, 0.75f));
+        tex.Apply();
+        return tex;
+    }
+
+    // Contains a single chat message
+    public struct TwitchChat
+    {
+        public readonly string Name;
+        public readonly string Color;
+        public readonly string Message;
+        public readonly List<TwitchIRC.EmoteKey> Emotes;
+
+        public TwitchChat(string name, string color, string message, List<TwitchIRC.EmoteKey> emotes)
+        {
+            Name = name;
+            Color = color;
+            Message = message;
+            Emotes = emotes;
+        }
+    }
+
+    // Contains a group of chat messages
+    public struct TwitchChatUpdate
+    {
+        public readonly TwitchChat[] Messages;
+        public readonly int[] EmoteIds;
+
+        public TwitchChatUpdate(TwitchChat[] messages, int[] emoteIds)
+        {
+            Messages = messages;
+            EmoteIds = emoteIds;
+        }
+    }
+
+    // Passes material/emoteid information for a given message/line
+    public struct MaterialIndexPair
+    {
+        public readonly int Index;
+        public readonly int EmoteId;
+        public readonly Material Material;
+
+        public MaterialIndexPair(int index, int emoteId, Material material)
+        {
+            Index = index;
+            EmoteId = emoteId;
+            Material = material;
+        }
+    }
+
+    // Passes material/text information for a given line
+    public struct LineEmotePair
+    {
+        public readonly string LineText;
+        public readonly MaterialIndexPair[] EmoteList;
+
+        public LineEmotePair(string lineText, MaterialIndexPair[] emoteList)
+        {
+            LineText = lineText;
+            EmoteList = emoteList;
+        }
+    }
+
+    // These are filled by JsonUtility so the compiler is confused
 #pragma warning disable 649
-// ReSharper disable InconsistentNaming
+    // ReSharper disable InconsistentNaming
     [Serializable]
     private class ChannelDataFull
     {
@@ -459,4 +773,20 @@ public class TwitchChatTester : MonoBehaviour
     }
 #pragma warning restore 649
 // ReSharper restore InconsistentNaming
+}
+
+public static class LinqExtensions 
+{
+    public static IEnumerable<TSource> DistinctBy<TSource, TKey>
+        (this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+    {
+        HashSet<TKey> seenKeys = new HashSet<TKey>();
+        foreach (TSource element in source)
+        {
+            if (seenKeys.Add(keySelector(element)))
+            {
+                yield return element;
+            }
+        }
+    }
 }

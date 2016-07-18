@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 public class TwitchIRC : MonoBehaviour
@@ -93,7 +94,7 @@ public class TwitchIRC : MonoBehaviour
 
                 _buffer = input.ReadLine();
                 if (_buffer == null) continue;
-                Debug.Log(_buffer);
+                //Debug.Log(_buffer);
 
                 string[] tokens;
                 string message;
@@ -133,23 +134,7 @@ public class TwitchIRC : MonoBehaviour
                         else if (key.StartsWith("emotes="))
                         {
                             var emotes = key.Substring(7).Split('/');
-                            foreach (var emote in emotes)
-                            {
-                                var emoteSplit = emote.IndexOf(":");
-                                if (emoteSplit == -1) continue; // No emotes sent
-                                var emoteId = int.Parse(emote.Substring(0, emoteSplit));
-                                var emotePos = emote.Substring(emoteSplit + 1);
-                                var emotePoses = emotePos.Split(',');
-                                foreach (var emoteP in emotePoses)
-                                {
-                                    var emoteTokens = emoteP.Split('-');
-                                    var emoteStart = int.Parse(emoteTokens[0]);
-                                    var emoteEnd = int.Parse(emoteTokens[1]) + 1;
-
-                                    emoteKeys.Add(new EmoteKey(emoteId, emoteStart, emoteEnd));
-                                    Debug.Log(string.Format("Used emote {0} from {1} to {2}", emoteId, emoteStart, emoteEnd));
-                                }
-                            }
+                            emoteKeys.AddRange(from emote in emotes let emoteSplit = emote.IndexOf(":") where emoteSplit != -1 let emoteId = int.Parse(emote.Substring(0, emoteSplit)) let emotePos = emote.Substring(emoteSplit + 1) let emotePoses = emotePos.Split(',') from emoteP in emotePoses let emoteTokens = emoteP.Split('-') let emoteStart = int.Parse(emoteTokens[0]) let emoteLen = (int.Parse(emoteTokens[1]) - emoteStart) + 1 select new EmoteKey(emoteId, emoteStart, emoteLen)); // LINQ master :P
                         }
                     }
 
@@ -160,23 +145,18 @@ public class TwitchIRC : MonoBehaviour
                         var messageSplit = message.Substring(1).IndexOf(':');
                         var messageHeader = message.Substring(0, messageSplit);
                         var messageBody = message.Substring(messageSplit + 2);
-
-                        Debug.Log("Header: " + messageHeader);
-                        Debug.Log("Body: " + messageBody);
+                        
                         for (var i = 0; i < emoteKeys.Count; i++)
                         {
-                            var len = emoteKeys[i].EmoteEnd - emoteKeys[i].EmoteStart;
-                            Debug.Log(string.Format("Removing {0} to {1} from {2}", emoteKeys[i].EmoteStart, len, messageBody));
-                            messageBody = messageBody.Remove(emoteKeys[i].EmoteStart, len);
-                            for (var j = i; j < emoteKeys.Count; j++)
+                            messageBody = messageBody.Remove(emoteKeys[i].EmoteStart, emoteKeys[i].EmoteLength);
+                            for (var j = i + 1; j < emoteKeys.Count; j++)
                             {
-                                emoteKeys[j].EmoteStart -= len;
-                                emoteKeys[j].EmoteEnd -= len;
+                                emoteKeys[j].EmoteStart -= emoteKeys[i].EmoteLength;
+                                //Debug.Log("Adjusting Emote Length");
                             }
                         }
 
                         message = messageHeader + " :" + messageBody;
-                        Debug.Log(message);
                     }
                 }
                 else
@@ -403,13 +383,13 @@ public class TwitchIRC : MonoBehaviour
     {
         public readonly int EmoteId;
         public int EmoteStart;
-        public int EmoteEnd;
+        public int EmoteLength;
 
-        public EmoteKey(int id, int start, int end)
+        public EmoteKey(int id, int start, int length)
         {
             EmoteId = id;
             EmoteStart = start;
-            EmoteEnd = end;
+            EmoteLength = length;
         }
     }
 }

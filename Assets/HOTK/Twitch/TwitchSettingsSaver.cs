@@ -6,7 +6,7 @@ using UnityEngine;
 [System.Serializable]
 public class TwitchSettings
 {
-    public const uint CurrentSaveVersion = 2;
+    public const uint CurrentSaveVersion = 3;
 
     public uint SaveFileVersion;
 
@@ -20,7 +20,7 @@ public class TwitchSettings
     public HOTK_Overlay.AttachmentPoint Point;
     public HOTK_Overlay.AnimationType Animation;
 
-    public float BackgroundR, BackgroundG, BackgroundB;
+    public float BackgroundR, BackgroundG, BackgroundB, BackgroundA;
 
     public float AlphaStart, AlphaEnd, AlphaSpeed;
     public float ScaleStart, ScaleEnd, ScaleSpeed;

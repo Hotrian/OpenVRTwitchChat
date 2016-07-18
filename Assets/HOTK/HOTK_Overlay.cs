@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEngine;
 using Valve.VR;
+using Random = System.Random;
 
 public class HOTK_Overlay : MonoBehaviour
 {
@@ -49,8 +50,10 @@ public class HOTK_Overlay : MonoBehaviour
     #endregion
 
     #region Interal Vars
+
+    public static Random rand = new Random();
     public static HOTK_Overlay HighQualityOverlay;  // Only one Overlay can be HQ at a time
-    public static string Key { get { return "unity:" + Application.companyName + "." + Application.productName; } }
+    public static string Key { get { return "unity:" + Application.companyName + "." + Application.productName + "." + rand.Next(); } }
     public static GameObject ZeroReference;         // Used to get a reference to the world 0, 0, 0 point
     public GameObject OverlayReference;             // Used to get a reference for the Overlay's transform
     

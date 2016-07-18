@@ -30,7 +30,7 @@ public class SteamVR_Overlay : MonoBehaviour
 
 	private ulong handle = OpenVR.k_ulOverlayHandleInvalid;
 
-    void OnEnable()
+	void OnEnable()
 	{
 		var overlay = OpenVR.Overlay;
 		if (overlay != null)

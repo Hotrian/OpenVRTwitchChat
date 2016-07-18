@@ -170,10 +170,10 @@ public class SteamVR_Render : MonoBehaviour
 #if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
                 if (cameras.Length == 0) continue;
                 SteamVR_Utils.QueueEventOnRenderThread(SteamVR.Unity.k_nRenderEventID_WaitGetPoses);
-				// Hack to flush render event that was queued in Update (this ensures WaitGetPoses has returned before we grab the new values).
-				SteamVR.Unity.EventWriteString("[UnityMain] GetNativeTexturePtr - Begin");
-				SteamVR_Camera.GetSceneTexture(cameras[0].GetComponent<Camera>().hdr).GetNativeTexturePtr();
-				SteamVR.Unity.EventWriteString("[UnityMain] GetNativeTexturePtr - End");
+                // Hack to flush render event that was queued in Update (this ensures WaitGetPoses has returned before we grab the new values).
+                SteamVR.Unity.EventWriteString("[UnityMain] GetNativeTexturePtr - Begin");
+                SteamVR_Camera.GetSceneTexture(cameras[0].GetComponent<Camera>().hdr).GetNativeTexturePtr();
+                SteamVR.Unity.EventWriteString("[UnityMain] GetNativeTexturePtr - End");
 
 				compositor.GetLastPoses(poses, gamePoses);
 				SteamVR_Utils.Event.Send("new_poses", poses);

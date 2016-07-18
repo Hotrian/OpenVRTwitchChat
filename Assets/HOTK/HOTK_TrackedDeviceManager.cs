@@ -130,7 +130,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
             return;
         }
 
-        Log("Searching for Controllers..");
+        if (_noControllersCount == 0) Log("Searching for Controllers..");
         _leftIndex = system.GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole.LeftHand);
         CallIndexChanged(ETrackedControllerRole.LeftHand, _leftIndex);
         _rightIndex = system.GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole.RightHand);
@@ -176,7 +176,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
         }
         else if (_leftIndex == OpenVR.k_unTrackedDeviceIndexInvalid && _rightIndex == OpenVR.k_unTrackedDeviceIndexInvalid) // Both controllers are unassigned
         {
-            LogWarning("SteamVR Reports No Assigned Controllers..! Searching..");
+            if (_noControllersCount == 0) LogWarning("SteamVR Reports No Assigned Controllers..! Searching..");
             var foundUnassigned = 0;
             var slots = new uint[2];
             // Sort through all the devices until we find two controllers
@@ -237,7 +237,7 @@ public class HOTK_TrackedDeviceManager : MonoBehaviour
                     }
                     break;
                 case 0:
-                    LogWarning("Couldn't Find Any Unassigned Controllers!");
+                    if (_noControllersCount == 0) LogWarning("Couldn't Find Any Unassigned Controllers!");
                     _noControllersCount++;
                     if (_noControllersCount >= 10)
                     {
