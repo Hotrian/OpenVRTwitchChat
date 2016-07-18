@@ -53,6 +53,11 @@ public class TooltipController : MonoBehaviour
         _tooltipRectTransform.sizeDelta = new Vector2(_tooltipText.preferredWidth, _tooltipText.preferredHeight);
     }
 
+    public string GetTooltipText()
+    {
+        return _tooltipText == null ? null : _tooltipText.text;
+    }
+
     public void SetTooltipPivot(string pivot)
     {
         switch (pivot)

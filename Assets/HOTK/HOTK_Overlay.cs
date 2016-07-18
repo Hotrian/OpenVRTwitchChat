@@ -65,6 +65,9 @@ public class HOTK_Overlay : MonoBehaviour
     private Vector3 _objectPosition = Vector3.zero;     // These are used to cache values and check for changes
     private Quaternion _anchorRotation = Quaternion.identity;   // These are used to cache values and check for changes
     private Quaternion _objectRotation = Quaternion.identity;   // These are used to cache values and check for changes
+    private bool _wasHighQuality;
+    private bool _wasAntiAlias;
+    private bool _wasCurved;
 
     private ulong _handle = OpenVR.k_ulOverlayHandleInvalid;    // caches a reference to our Overlay handle
     private HOTK_TrackedDevice _hmdTracker;                     // caches a reference to the HOTK_TrackedDevice that is tracking the HMD
@@ -97,6 +100,8 @@ public class HOTK_Overlay : MonoBehaviour
         CheckOverlayAlphaAndScale(ref changed);
         // Check if our Overlay is being Gazed at, or has been recently and is still animating
         if (AnimateOnGaze != AnimationType.None) UpdateGaze(ref changed);
+        // Check if our Overlay's HighQuality, AntiAlias, or Curved setting changed
+        CheckHighQualityChanged(ref changed);
         // Update our Overlay if anything has changed
         if (changed)
             UpdateOverlay();
@@ -391,7 +396,16 @@ public class HOTK_Overlay : MonoBehaviour
         changed = true;
 
         if (MeshRenderer != null) // If our texture changes, change our MeshRenderer's texture also. The MeshRenderer is optional.
-            MeshRenderer.material.mainTexture = OverlayTexture; 
+            MeshRenderer.material.mainTexture = OverlayTexture;
+    }
+
+    private void CheckHighQualityChanged(ref bool changed)
+    {
+        if (_wasHighQuality == Highquality && _wasAntiAlias == Antialias && _wasCurved == Curved) return;
+        _wasHighQuality = Highquality;
+        _wasAntiAlias = Antialias;
+        _wasCurved = Curved;
+        changed = true;
     }
 
     /// <summary>
@@ -600,6 +614,7 @@ public class HOTK_Overlay : MonoBehaviour
                 eColorSpace = EColorSpace.Auto
             };
             overlay.SetOverlayColor(_handle, 1f, 1f, 1f);
+            //overlay.SetOverlayGamma(_handle, 2.2f); // Doesn't exist yet :(
             overlay.SetOverlayTexture(_handle, ref tex);
             overlay.SetOverlayAlpha(_handle, AnimateOnGaze == AnimationType.Alpha || AnimateOnGaze == AnimationType.AlphaAndScale ? _alpha : Alpha);
             overlay.SetOverlayWidthInMeters(_handle, AnimateOnGaze == AnimationType.Scale || AnimateOnGaze == AnimationType.AlphaAndScale ? _scale : Scale);

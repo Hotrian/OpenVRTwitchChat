@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Dropdown))]
@@ -42,6 +43,10 @@ public class DropdownSaveLoadController : MonoBehaviour
 
     public Button SaveButton;
     public Button LoadButton;
+    public Button DeleteButton;
+    public Text DeleteButtonText;
+
+    public EventTrigger DeleteButtonTriggers;
 
     public InputField SaveName;
     public Button SaveNewButton;
@@ -58,18 +63,16 @@ public class DropdownSaveLoadController : MonoBehaviour
 
     public void OnEnable()
     {
-        if (TwitchSettingsSaver.SavedSettings.Count == 0)
-        {
-            TwitchSettingsSaver.Load();
-        }
+        if (TwitchSettingsSaver.CurrentProgramSettings == null) TwitchSettingsSaver.LoadProgramSettings();
         ReloadOptions();
+        if (TwitchSettingsSaver.CurrentProgramSettings != null && !string.IsNullOrEmpty(TwitchSettingsSaver.CurrentProgramSettings.LastProfile)) OnLoadPressed(true);
     }
 
     private void ReloadOptions()
     {
         Dropdown.ClearOptions();
         var strings = new List<string> { NewString };
-        strings.AddRange(TwitchSettingsSaver.SavedSettings.Select(config => config.Key));
+        strings.AddRange(TwitchSettingsSaver.SavedProfiles.Select(config => config.Key));
 
         Dropdown.AddOptions(strings);
 
@@ -95,11 +98,13 @@ public class DropdownSaveLoadController : MonoBehaviour
 
     public void OnValueChanges()
     {
+        CancelConfirmingDelete();
         if (SavingNew)
         {
             Dropdown.interactable = false;
             SaveName.interactable = true;
             CancelNewButton.interactable = true;
+            DeleteButton.interactable = false;
             LoadButton.interactable = false;
             SaveButton.interactable = false;
         }
@@ -111,23 +116,27 @@ public class DropdownSaveLoadController : MonoBehaviour
             CancelNewButton.interactable = false;
             if (Dropdown.options[Dropdown.value].text == NewString)
             {
+                DeleteButton.interactable = false;
                 LoadButton.interactable = false;
                 SaveButton.interactable = true;
             }
             else
             {
+                DeleteButton.interactable = true;
                 LoadButton.interactable = true;
                 SaveButton.interactable = true;
             }
         }
     }
 
-    public void OnLoadPressed() // Load an existing save
+    public void OnLoadPressed(bool startup = false) // Loads an existing save
     {
+        CancelConfirmingDelete();
         TwitchSettings settings;
-        if (!TwitchSettingsSaver.SavedSettings.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
-        TwitchChatTester.Instance.AddSystemNotice("Loading saved settings " + Dropdown.options[Dropdown.value].text);
+        if (!TwitchSettingsSaver.SavedProfiles.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
+        TwitchChatTester.Instance.AddSystemNotice(startup ? "Loading last used settings " + Dropdown.options[Dropdown.value].text : "Loading saved settings " + Dropdown.options[Dropdown.value].text);
         TwitchSettingsSaver.Current = Dropdown.options[Dropdown.value].text;
+        if (!startup) TwitchSettingsSaver.SaveProgramSettings();
         if (!TwitchChatTester.Instance.Connected) UsernameField.text = settings.Username;
         if (!TwitchChatTester.Instance.Connected) ChannelField.text = settings.Channel;
 
@@ -172,8 +181,50 @@ public class DropdownSaveLoadController : MonoBehaviour
         ScaleSpeedField.onEndEdit.Invoke("");
     }
 
+    private bool _confirmingDelete = false;
+    private string _deleteTextDefault = "Delete the selected profile.";
+    private string _deleteTextConfirm = "Really Delete?";
+
+    public void OnDeleteButtonTooltip(bool forced = false)
+    {
+        if (_confirmingDelete)
+        {
+            if (forced || TooltipController.Instance.GetTooltipText() == _deleteTextDefault)
+                TooltipController.Instance.SetTooltipText(_deleteTextConfirm);
+        }
+        else
+        {
+            if (forced || TooltipController.Instance.GetTooltipText() == _deleteTextConfirm)
+                TooltipController.Instance.SetTooltipText(_deleteTextDefault);
+        }
+    }
+
+    public void CancelConfirmingDelete()
+    {
+        _confirmingDelete = false;
+        DeleteButtonText.color = new Color(0.196f, 0.196f, 0.196f, 1f);
+        OnDeleteButtonTooltip();
+    }
+
+    public void OnDeletePressed()
+    {
+        if (!_confirmingDelete)
+        {
+            _confirmingDelete = true;
+            DeleteButtonText.color = Color.red;
+            OnDeleteButtonTooltip();
+        }
+        else
+        {
+            TwitchSettingsSaver.DeleteProfile(Dropdown.options[Dropdown.value].text);
+            CancelConfirmingDelete();
+            ReloadOptions();
+        }
+    }
+
     public void OnSavePressed()
     {
+        CancelConfirmingDelete();
         if (Dropdown.options[Dropdown.value].text == NewString) // Start creating a new save
         {
             SavingNew = true;
@@ -182,7 +233,7 @@ public class DropdownSaveLoadController : MonoBehaviour
         else // Overwrite an existing save
         {
             TwitchSettings settings;
-            if (!TwitchSettingsSaver.SavedSettings.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
+            if (!TwitchSettingsSaver.SavedProfiles.TryGetValue(Dropdown.options[Dropdown.value].text, out settings)) return;
             TwitchChatTester.Instance.AddSystemNotice("Overwriting saved settings " + Dropdown.options[Dropdown.value].text);
             settings.SaveFileVersion = TwitchSettings.CurrentSaveVersion;
 
@@ -207,7 +258,7 @@ public class DropdownSaveLoadController : MonoBehaviour
 
             settings.AlphaStart = OverlayToSave.Alpha; settings.AlphaEnd = OverlayToSave.Alpha2; settings.AlphaSpeed = OverlayToSave.AlphaSpeed;
             settings.ScaleStart = OverlayToSave.Scale; settings.ScaleEnd = OverlayToSave.Scale2; settings.ScaleSpeed = OverlayToSave.ScaleSpeed;
-            TwitchSettingsSaver.Save();
+            TwitchSettingsSaver.SaveProfiles();
         }
     }
 
@@ -218,17 +269,18 @@ public class DropdownSaveLoadController : MonoBehaviour
 
     public void OnSaveNewPressed()
     {
-        if (string.IsNullOrEmpty(SaveName.text) || TwitchSettingsSaver.SavedSettings.ContainsKey(SaveName.text)) return;
+        if (string.IsNullOrEmpty(SaveName.text) || TwitchSettingsSaver.SavedProfiles.ContainsKey(SaveName.text)) return;
         SavingNew = false;
         TwitchChatTester.Instance.AddSystemNotice("Adding saved settings " + SaveName.text);
-        TwitchSettingsSaver.SavedSettings.Add(SaveName.text, ConvertToTwitchSettings(OverlayToSave));
-        TwitchSettingsSaver.Save();
+        TwitchSettingsSaver.SavedProfiles.Add(SaveName.text, ConvertToTwitchSettings(OverlayToSave));
+        TwitchSettingsSaver.SaveProfiles();
         SaveName.text = "";
         ReloadOptions();
     }
 
     private TwitchSettings ConvertToTwitchSettings(HOTK_Overlay o) // Create a new save state
     {
+        var backgroundColor = GetMaterialTexture().GetPixel(0, 0);
         return new TwitchSettings()
         {
             SaveFileVersion = TwitchSettings.CurrentSaveVersion,
@@ -246,9 +298,10 @@ public class DropdownSaveLoadController : MonoBehaviour
             Point = o.AnchorPoint,
             Animation = o.AnimateOnGaze,
 
-            BackgroundR = BackgroundMaterial.color.r,
-            BackgroundG = BackgroundMaterial.color.g,
-            BackgroundB = BackgroundMaterial.color.b,
+            BackgroundR = backgroundColor.r,
+            BackgroundG = backgroundColor.g,
+            BackgroundB = backgroundColor.b,
+            BackgroundA = backgroundColor.a,
 
             AlphaStart = o.Alpha, AlphaEnd = o.Alpha2, AlphaSpeed = o.AlphaSpeed,
             ScaleStart = o.Scale, ScaleEnd = o.Scale2, ScaleSpeed = o.ScaleSpeed,
