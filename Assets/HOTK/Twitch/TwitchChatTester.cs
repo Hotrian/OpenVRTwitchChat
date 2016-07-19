@@ -48,6 +48,8 @@ public class TwitchChatTester : MonoBehaviour
     public AudioSource IncomingMessageSoundSource5;
     public AudioSource IncomingMessageSoundSource6;
 
+    public AudioSource NewFollowerSoundSource;
+
     public TwitchIRC IRC
     {
         get { return _irc ?? (_irc = GetComponent<TwitchIRC>()); }
@@ -59,6 +61,7 @@ public class TwitchChatTester : MonoBehaviour
     private readonly Dictionary<int, Material> _emoteMap = new Dictionary<int, Material>(); // Used temporarily to store the currect emotes on a given line
 
     private readonly Stopwatch _messageSoundStopwatch = new Stopwatch(); // Used to prevent message sound spamming
+    private readonly Stopwatch _newFollowerSoundStopwatch = new Stopwatch(); // Used to prevent message sound spamming
 
     public bool Connected
     {
@@ -159,7 +162,10 @@ public class TwitchChatTester : MonoBehaviour
                             {
                                 knownFollowers.Add(follower.user._id, follower);
                                 if (!gettingInitialFollowers)
+                                { 
                                     OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(follower.user.display_name + " is now following!", TwitchIRC.NoticeColor.Purple)));
+                                    PlayNewFollowerSound();
+                                }
                             }
                         }
                         gettingInitialFollowers = false;
@@ -338,6 +344,48 @@ public class TwitchChatTester : MonoBehaviour
         else if (IncomingMessageSoundSource4 != null && IncomingMessageSoundSource4.clip != null && !IncomingMessageSoundSource4.isPlaying) IncomingMessageSoundSource4.Play();
         else if (IncomingMessageSoundSource5 != null && IncomingMessageSoundSource5.clip != null && !IncomingMessageSoundSource5.isPlaying) IncomingMessageSoundSource5.Play();
         else if (IncomingMessageSoundSource6 != null && IncomingMessageSoundSource6.clip != null) IncomingMessageSoundSource6.Play();
+    }
+
+    /// <summary>
+    /// Set the Pitch of the New Follower sound
+    /// </summary>
+    /// <param name="pitch"></param>
+    public void SetNewFollowerPitch(float pitch)
+    {
+        NewFollowerSoundSource.pitch = pitch;
+    }
+
+    /// <summary>
+    /// Set the AudioClip to be played when New Followers are received
+    /// </summary>
+    /// <param name="sound"></param>
+    public void SetNewFollowerSound(AudioClip sound)
+    {
+        NewFollowerSoundSource.clip = sound;
+    }
+
+    /// <summary>
+    /// Set the Volume of the New Follower sound
+    /// </summary>
+    /// <param name="volume"></param>
+    public void SetNewFollowerVolume(float volume)
+    {
+        NewFollowerSoundSource.volume = volume;
+    }
+
+    public void PlayNewFollowerSound()
+    {
+        // Prevent the message sound from spamming too rapidly
+        if (_newFollowerSoundStopwatch.IsRunning)
+        {
+            if (_newFollowerSoundStopwatch.ElapsedMilliseconds < 50) return;
+            _newFollowerSoundStopwatch.Reset();
+            _newFollowerSoundStopwatch.Start();
+        }
+        else
+            _newFollowerSoundStopwatch.Start();
+
+        if (NewFollowerSoundSource != null && NewFollowerSoundSource.clip != null) NewFollowerSoundSource.Play();
     }
 
     // Add a system message to the chat display
@@ -556,9 +604,9 @@ public class TwitchChatTester : MonoBehaviour
                 // Remove excess lines
                 while (lines.Count > ChatLineCount)
                     lines.RemoveAt(0);
-                
+
                 // Set the Emote materials and TextMesh texts
-                var offset = ChatLineCount - lines.Count;
+                    var offset = ChatLineCount - lines.Count;
                 for (var i = 0; i < ChatLineCount; i++)
                 {
                     if (i >= lines.Count) continue;
@@ -628,7 +676,7 @@ public class TwitchChatTester : MonoBehaviour
                 ChatTextMeshes[i].text = "";
                 obj.transform.parent = gameObject.transform.parent;
                 obj.transform.localScale = new Vector3(0.005f, 0.005f, 1f);
-                obj.transform.localPosition = new Vector3(-0.5f, 0.465f - (0.0355f * i), -1f);
+                obj.transform.localPosition = new Vector3(-0.5f, 0.465f - (0.037f * i), -1f);
                 obj.SetActive(true);
             }
             _hasGeneratedTextMeshes = true;
@@ -654,6 +702,9 @@ public class TwitchChatTester : MonoBehaviour
         if (str == null)
             return null;
 
+        var endsWith_ = str.EndsWith("_");
+        if (endsWith_) str = str.Substring(0, str.Length - 1);
+
         if (str.Length <= 1) return str.ToUpper();
         var pieces = str.Split('_');
         var st = "";
@@ -663,6 +714,7 @@ public class TwitchChatTester : MonoBehaviour
             if (i < pieces.Length - 1)
                 st += "_";
         }
+        if (endsWith_) st += "_";
         return st;
     }
 

@@ -14,7 +14,7 @@ public class ProgramSettings
 [System.Serializable]
 public class TwitchSettings
 {
-    public const uint CurrentSaveVersion = 3;
+    public const uint CurrentSaveVersion = 4;
 
     public uint SaveFileVersion;
 
@@ -24,6 +24,8 @@ public class TwitchSettings
     public float RX, RY, RZ;
     public string ChatSound;
     public float Volume, Pitch;
+    public string FollowerSound;
+    public float FollowerVolume, FollowerPitch;
     public HOTK_Overlay.AttachmentDevice Device;
     public HOTK_Overlay.AttachmentPoint Point;
     public HOTK_Overlay.AnimationType Animation;
@@ -43,7 +45,7 @@ public static class TwitchSettingsSaver
     public static string Current;
     public static ProgramSettings CurrentProgramSettings;
     public static Dictionary<string, TwitchSettings> SavedProfiles = new Dictionary<string, TwitchSettings>();
-    
+
     public static void SaveProfiles(int mode = -1)
     {
         var bf = new BinaryFormatter();

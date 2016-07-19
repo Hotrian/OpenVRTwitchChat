@@ -24,6 +24,9 @@ public class DropdownSaveLoadController : MonoBehaviour
     public DropdownMatchFileOptions ChatSoundDropdown;
     public VolumeMatchSlider VolumeSlider;
     public PitchMatchSlider PitchSlider;
+    public DropdownMatchFileOptions NewFollowerSoundDropdown;
+    public VolumeMatchSlider NewFollowerVolumeSlider;
+    public PitchMatchSlider NewFollowerPitchSlider;
 
     public DropdownMatchEnumOptions DeviceDropdown;
     public DropdownMatchEnumOptions PointDropdown;
@@ -94,12 +97,12 @@ public class DropdownSaveLoadController : MonoBehaviour
         }
     }
 
-    private bool SavingNew = false;
+    private bool _savingNew;
 
     public void OnValueChanges()
     {
         CancelConfirmingDelete();
-        if (SavingNew)
+        if (_savingNew)
         {
             Dropdown.interactable = false;
             SaveName.interactable = true;
@@ -157,6 +160,15 @@ public class DropdownSaveLoadController : MonoBehaviour
         }
         ChatSoundDropdown.SetToOption(settings.SaveFileVersion >= 1 ? (settings.SaveFileVersion >= 2 ? settings.ChatSound : settings.ChatSound + ".wav") : "gui-sound-effects-031.wav", true); // Save File compatability
 
+        if (settings.SaveFileVersion >= 4) // Save File compatability
+        {
+            NewFollowerVolumeSlider.Slider.value = settings.FollowerVolume;
+            NewFollowerVolumeSlider.OnSliderEndDrag(false);
+            NewFollowerPitchSlider.Slider.value = settings.FollowerPitch;
+            NewFollowerPitchSlider.OnSliderEndDrag(false);
+        }
+        NewFollowerSoundDropdown.SetToOption(settings.SaveFileVersion >= 4 ? settings.FollowerSound : "gui-sound-effects-038.wav"); // Save File compatability
+
         DeviceDropdown.SetToOption(settings.Device.ToString());
         PointDropdown.SetToOption(settings.Point.ToString());
         AnimationDropdown.SetToOption(settings.Animation.ToString());
@@ -181,7 +193,7 @@ public class DropdownSaveLoadController : MonoBehaviour
         ScaleSpeedField.onEndEdit.Invoke("");
     }
 
-    private bool _confirmingDelete = false;
+    private bool _confirmingDelete;
     private string _deleteTextDefault = "Delete the selected profile.";
     private string _deleteTextConfirm = "Really Delete?";
 
@@ -222,12 +234,15 @@ public class DropdownSaveLoadController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Overwrite an existing save, or save a new one
+    /// </summary>
     public void OnSavePressed()
     {
         CancelConfirmingDelete();
         if (Dropdown.options[Dropdown.value].text == NewString) // Start creating a new save
         {
-            SavingNew = true;
+            _savingNew = true;
             OnValueChanges();
         }
         else // Overwrite an existing save
@@ -245,6 +260,10 @@ public class DropdownSaveLoadController : MonoBehaviour
             settings.ChatSound = ChatSoundDropdown.Dropdown.options[ChatSoundDropdown.Dropdown.value].text;
             settings.Volume = VolumeSlider.Slider.value;
             settings.Pitch = PitchSlider.Slider.value;
+
+            settings.FollowerSound = NewFollowerSoundDropdown.Dropdown.options[NewFollowerSoundDropdown.Dropdown.value].text;
+            settings.FollowerVolume = NewFollowerVolumeSlider.Slider.value;
+            settings.FollowerPitch = NewFollowerPitchSlider.Slider.value;
 
             settings.Device = OverlayToSave.AnchorDevice;
             settings.Point = OverlayToSave.AnchorPoint;
@@ -270,7 +289,7 @@ public class DropdownSaveLoadController : MonoBehaviour
     public void OnSaveNewPressed()
     {
         if (string.IsNullOrEmpty(SaveName.text) || TwitchSettingsSaver.SavedProfiles.ContainsKey(SaveName.text)) return;
-        SavingNew = false;
+        _savingNew = false;
         TwitchChatTester.Instance.AddSystemNotice("Adding saved settings " + SaveName.text);
         TwitchSettingsSaver.SavedProfiles.Add(SaveName.text, ConvertToTwitchSettings(OverlayToSave));
         TwitchSettingsSaver.SaveProfiles();
@@ -278,6 +297,9 @@ public class DropdownSaveLoadController : MonoBehaviour
         ReloadOptions();
     }
 
+    /// <summary>
+    /// Create a new Save
+    /// </summary>
     private TwitchSettings ConvertToTwitchSettings(HOTK_Overlay o) // Create a new save state
     {
         var backgroundColor = GetMaterialTexture().GetPixel(0, 0);
@@ -287,12 +309,20 @@ public class DropdownSaveLoadController : MonoBehaviour
 
             Username = UsernameField.text,
             Channel = ChannelField.text,
-            X = o.AnchorOffset.x, Y = o.AnchorOffset.y, Z = o.AnchorOffset.z,
-            RX = o.transform.eulerAngles.x, RY = o.transform.eulerAngles.y, RZ = o.transform.eulerAngles.z,
+            X = o.AnchorOffset.x,
+            Y = o.AnchorOffset.y,
+            Z = o.AnchorOffset.z,
+            RX = o.transform.eulerAngles.x,
+            RY = o.transform.eulerAngles.y,
+            RZ = o.transform.eulerAngles.z,
 
             ChatSound = ChatSoundDropdown.Dropdown.options[ChatSoundDropdown.Dropdown.value].text,
             Volume = VolumeSlider.Slider.value,
             Pitch = PitchSlider.Slider.value,
+
+            FollowerSound = NewFollowerSoundDropdown.Dropdown.options[NewFollowerSoundDropdown.Dropdown.value].text,
+            FollowerVolume = NewFollowerVolumeSlider.Slider.value,
+            FollowerPitch = NewFollowerPitchSlider.Slider.value,
 
             Device = o.AnchorDevice,
             Point = o.AnchorPoint,
@@ -303,14 +333,18 @@ public class DropdownSaveLoadController : MonoBehaviour
             BackgroundB = backgroundColor.b,
             BackgroundA = backgroundColor.a,
 
-            AlphaStart = o.Alpha, AlphaEnd = o.Alpha2, AlphaSpeed = o.AlphaSpeed,
-            ScaleStart = o.Scale, ScaleEnd = o.Scale2, ScaleSpeed = o.ScaleSpeed,
+            AlphaStart = o.Alpha,
+            AlphaEnd = o.Alpha2,
+            AlphaSpeed = o.AlphaSpeed,
+            ScaleStart = o.Scale,
+            ScaleEnd = o.Scale2,
+            ScaleSpeed = o.ScaleSpeed,
         };
     }
 
     public void OnCancelNewPressed()
     {
-        SavingNew = false;
+        _savingNew = false;
         SaveName.text = "";
         OnValueChanges();
     }
