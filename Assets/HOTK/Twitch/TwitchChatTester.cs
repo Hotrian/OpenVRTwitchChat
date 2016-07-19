@@ -105,7 +105,12 @@ public class TwitchChatTester : MonoBehaviour
                         IRC.enabled = true;
                         IRC.MessageRecievedEvent.AddListener(OnChatMsg);
                         IRC.StartIRC();
+                        knownFollowers.Clear();
+                        StopCoroutine("UpdateViews");
+                        StopCoroutine("UpdateFollowers");
+                        gettingInitialFollowers = true;
                         StartCoroutine("UpdateViews");
+                        StartCoroutine("UpdateFollowers");
                     }
                     else AddSystemNotice("Unable to Connect: Enter a Valid Channel Name!", TwitchIRC.NoticeColor.Red);
                 }
@@ -124,9 +129,54 @@ public class TwitchChatTester : MonoBehaviour
             IRC.MessageRecievedEvent.RemoveListener(OnChatMsg);
             IRC.enabled = false;
             OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice("Disconnected!", TwitchIRC.NoticeColor.Red)));
+            knownFollowers.Clear();
             StopCoroutine("UpdateViews");
+            StopCoroutine("UpdateFollowers");
             ClearViewerCountAndChannelName("Disconnected");
         }
+    }
+
+
+    private Dictionary<uint, FollowsData> knownFollowers = new Dictionary<uint, FollowsData>();
+    private bool gettingInitialFollowers;
+
+    IEnumerator UpdateFollowers()
+    {
+        while (Connected && IRC.ChannelName.Length > 0)
+        {
+            WWW www = new WWW(URLAntiCacheRandomizer("https://api.twitch.tv/kraken/channels/" + IRC.ChannelName + "/follows"));
+            yield return www;
+            FollowsDataFull obj = JsonUtility.FromJson<FollowsDataFull>(www.text);
+            if (obj != null)
+            {
+                if (obj.follows != null)
+                {
+                    if (obj.follows.Length > 0)
+                    {
+                        foreach (var follower in obj.follows)
+                        {
+                            if (!knownFollowers.ContainsKey(follower.user._id))
+                            {
+                                knownFollowers.Add(follower.user._id, follower);
+                                if (!gettingInitialFollowers)
+                                    OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(follower.user.display_name + " is now following!", TwitchIRC.NoticeColor.Purple)));
+                            }
+                        }
+                        gettingInitialFollowers = false;
+                    }
+                }
+            }
+            yield return new WaitForSeconds(30f);
+        }
+    }
+
+    public static string URLAntiCacheRandomizer(string url)
+    {
+        var r = "";
+        r += UnityEngine.Random.Range(1000000, 8000000).ToString();
+        r += UnityEngine.Random.Range(1000000, 8000000).ToString();
+        var result = url + "?p=" + r;
+        return result;
     }
 
     // Update the view count as often as possible
@@ -771,8 +821,51 @@ public class TwitchChatTester : MonoBehaviour
     {
         public string self;
     }
+
+    [Serializable]
+    private class FollowsDataFull
+    {
+        public uint _total;
+        public FollowsLinksData _links;
+        public FollowsData[] follows;
+    }
+
+    [Serializable]
+    private class FollowsLinksData
+    {
+        public string next;
+        public string self;
+    }
+
+    [Serializable]
+    private class FollowsData
+    {
+        public string created_at;
+        public FollowerLinks _links;
+        public bool notifications;
+        public FollowerData user;
+    }
+
+    [Serializable]
+    private class FollowerData
+    {
+        public FollowerLinks _links;
+        public bool staff;
+        public string logo;
+        public string display_name;
+        public string created_at;
+        public string updated_at;
+        public uint _id;
+        public string name;
+    }
+
+    [Serializable]
+    private class FollowerLinks
+    {
+        public string self;
+    }
 #pragma warning restore 649
-// ReSharper restore InconsistentNaming
+    // ReSharper restore InconsistentNaming
 }
 
 public static class LinqExtensions 
