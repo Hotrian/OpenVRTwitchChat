@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine.UI;
+using Valve.VR;
 using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(TwitchIRC), typeof(TextMesh))]
@@ -77,6 +78,7 @@ public class TwitchChatTester : MonoBehaviour
     public void Start()
     {
         ClearViewerCountAndChannelName("Disconnected");
+        StartCoroutine("SyncWithSteamVR");
     }
 
     public void ToggleConnect()
@@ -111,9 +113,11 @@ public class TwitchChatTester : MonoBehaviour
                         knownFollowers.Clear();
                         StopCoroutine("UpdateViews");
                         StopCoroutine("UpdateFollowers");
+                        StopCoroutine("SyncWithSteamVR");
                         gettingInitialFollowers = true;
                         StartCoroutine("UpdateViews");
                         StartCoroutine("UpdateFollowers");
+                        StartCoroutine("SyncWithSteamVR");
                     }
                     else AddSystemNotice("Unable to Connect: Enter a Valid Channel Name!", TwitchIRC.NoticeColor.Red);
                 }
@@ -139,6 +143,19 @@ public class TwitchChatTester : MonoBehaviour
         }
     }
 
+    IEnumerator SyncWithSteamVR()
+    {
+        while (Application.isPlaying)
+        {
+            var compositor = OpenVR.Compositor;
+            if (compositor != null)
+            {
+                var trackingSpace = compositor.GetTrackingSpace();
+                SteamVR_Render.instance.trackingSpace = trackingSpace;
+            }
+            yield return new WaitForSeconds(10f);
+        }
+    }
 
     private Dictionary<uint, FollowsData> knownFollowers = new Dictionary<uint, FollowsData>();
     private bool gettingInitialFollowers;
