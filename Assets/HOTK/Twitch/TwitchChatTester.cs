@@ -81,49 +81,72 @@ public class TwitchChatTester : MonoBehaviour
         StartCoroutine("SyncWithSteamVR");
     }
 
+    private string _username;
+
+    private void GenRandomJustinFan()
+    {
+        if (!string.IsNullOrEmpty(_username)) return;
+        var r = new System.Random();
+        var n = r.Next().ToString();
+        if (n.Length > 5) n = n.Substring(0, 5);
+        _username = "JustinFan" + n;
+    }
+
     public void ToggleConnect()
     {
         if (!Connected)
         {
-            if (UsernameBox != null && UsernameBox.text != "")
+            var anonymousLogin = false;
+            if (!string.IsNullOrEmpty(UsernameBox.text))
             {
-                if (OAuthBox != null && OAuthBox.text != "")
+                if (string.IsNullOrEmpty(OAuthBox.text))
                 {
-                    if (ChannelBox != null && ChannelBox.text != "")
-                    {
-                        if (ChannelBox.text.Contains(" "))
-                        {
-                            AddSystemNotice("Channel name invalid!", TwitchIRC.NoticeColor.Red);
-                            return;
-                        }
-                        UsernameBox.interactable = false;
-                        OAuthBox.interactable = false;
-                        ChannelBox.interactable = false;
-                        ConnectButtonText.text = "Press to Disconnect";
-
-                        Connected = true;
-                        OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelFirstLetterToUpper(ChannelBox.text), FirstLetterToUpper(UsernameBox.text)))));
-                        IRC.NickName = UsernameBox.text;
-                        IRC.Oauth = OAuthBox.text;
-                        IRC.ChannelName = ChannelBox.text.Trim().ToLower();
-
-                        IRC.enabled = true;
-                        IRC.MessageRecievedEvent.AddListener(OnChatMsg);
-                        IRC.StartIRC();
-                        knownFollowers.Clear();
-                        StopCoroutine("UpdateViews");
-                        StopCoroutine("UpdateFollowers");
-                        StopCoroutine("SyncWithSteamVR");
-                        gettingInitialFollowers = true;
-                        StartCoroutine("UpdateViews");
-                        StartCoroutine("UpdateFollowers");
-                        StartCoroutine("SyncWithSteamVR");
-                    }
-                    else AddSystemNotice("Unable to Connect: Enter a Valid Channel Name!", TwitchIRC.NoticeColor.Red);
+                    AddSystemNotice("OAuth not found. Connecting Anonymously.", TwitchIRC.NoticeColor.Yellow);
+                    GenRandomJustinFan();
+                    UsernameBox.text = _username;
+                    OAuthBox.text = "";
+                    anonymousLogin = true;
                 }
-                else AddSystemNotice("Unable to Connect: Enter a Valid OAuth Key! http://www.twitchapps.com/tmi/", TwitchIRC.NoticeColor.Red);
             }
-            else AddSystemNotice("Unable to Connect: Enter a Valid Username!", TwitchIRC.NoticeColor.Red);
+            else
+            {
+                AddSystemNotice("Username not found. Connecting Anonymously.", TwitchIRC.NoticeColor.Yellow);
+                GenRandomJustinFan();
+                UsernameBox.text = _username;
+                OAuthBox.text = "";
+                anonymousLogin = true;
+            }
+            if (ChannelBox != null && ChannelBox.text != "")
+            {
+                if (ChannelBox.text.Contains(" "))
+                {
+                    AddSystemNotice("Channel name invalid!", TwitchIRC.NoticeColor.Red);
+                    return;
+                }
+                UsernameBox.interactable = false;
+                OAuthBox.interactable = false;
+                ChannelBox.interactable = false;
+                ConnectButtonText.text = "Press to Disconnect";
+
+                Connected = true;
+                OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(string.Format("Logging into #{0} as {1}!", ChannelFirstLetterToUpper(ChannelBox.text), FirstLetterToUpper(UsernameBox.text)))));
+                IRC.NickName = anonymousLogin ? _username : UsernameBox.text;
+                IRC.Oauth = anonymousLogin ? "a" : OAuthBox.text;
+                IRC.ChannelName = ChannelBox.text.Trim().ToLower();
+
+                IRC.enabled = true;
+                IRC.MessageRecievedEvent.AddListener(OnChatMsg);
+                IRC.StartIRC();
+                _knownFollowers.Clear();
+                StopCoroutine("UpdateViews");
+                StopCoroutine("UpdateFollowers");
+                StopCoroutine("SyncWithSteamVR");
+                _gettingInitialFollowers = true;
+                StartCoroutine("UpdateViews");
+                StartCoroutine("UpdateFollowers");
+                StartCoroutine("SyncWithSteamVR");
+            }
+            else AddSystemNotice("Unable to Connect: Enter a Valid Channel Name!", TwitchIRC.NoticeColor.Red);
         }
         else
         {
@@ -136,14 +159,14 @@ public class TwitchChatTester : MonoBehaviour
             IRC.MessageRecievedEvent.RemoveListener(OnChatMsg);
             IRC.enabled = false;
             OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice("Disconnected!", TwitchIRC.NoticeColor.Red)));
-            knownFollowers.Clear();
+            _knownFollowers.Clear();
             StopCoroutine("UpdateViews");
             StopCoroutine("UpdateFollowers");
             ClearViewerCountAndChannelName("Disconnected");
         }
     }
 
-    IEnumerator SyncWithSteamVR()
+    private IEnumerator SyncWithSteamVR()
     {
         while (Application.isPlaying)
         {
@@ -157,37 +180,50 @@ public class TwitchChatTester : MonoBehaviour
         }
     }
 
-    private Dictionary<uint, FollowsData> knownFollowers = new Dictionary<uint, FollowsData>();
-    private bool gettingInitialFollowers;
+    private readonly Dictionary<uint, FollowsData> _knownFollowers = new Dictionary<uint, FollowsData>();
+    private bool _gettingInitialFollowers;
 
-    IEnumerator UpdateFollowers()
+    private IEnumerator UpdateFollowers()
     {
         while (Connected && IRC.ChannelName.Length > 0)
         {
-            WWW www = new WWW(URLAntiCacheRandomizer("https://api.twitch.tv/kraken/channels/" + IRC.ChannelName + "/follows"));
+            var form = new WWWForm();
+            form.AddField("name", "value");
+            var headers = form.headers;
+            var url = URLAntiCacheRandomizer("https://api.twitch.tv/kraken/channels/" + IRC.ChannelName + "/follows?limit=100");
+
+            headers["Client-ID"] = "REMOVED FOR GITHUB"; //#TODO Replace with your Client-ID
+            var www = new WWW(url, null, headers);
             yield return www;
-            FollowsDataFull obj = JsonUtility.FromJson<FollowsDataFull>(www.text);
-            if (obj != null)
+            if (string.IsNullOrEmpty(www.error))
             {
-                if (obj.follows != null)
+                var obj = JsonUtility.FromJson<FollowsDataFull>(www.text);
+                if (obj != null)
                 {
-                    if (obj.follows.Length > 0)
+                    if (obj.follows != null)
                     {
-                        foreach (var follower in obj.follows)
+                        if (obj.follows.Length > 0)
                         {
-                            if (!knownFollowers.ContainsKey(follower.user._id))
+                            Debug.Log("Found " + obj._total + " followers, retrieved top " + obj.follows.Length);
+                            foreach (var follower in obj.follows.Where(follower => !_knownFollowers.ContainsKey(follower.user._id)))
                             {
-                                knownFollowers.Add(follower.user._id, follower);
-                                if (!gettingInitialFollowers)
-                                { 
-                                    OnChatMsg(new TwitchIRC.TwitchMessage(TwitchIRC.ToTwitchNotice(follower.user.display_name + " is now following!", TwitchIRC.NoticeColor.Purple)));
-                                    PlayNewFollowerSound();
-                                }
+                                _knownFollowers.Add(follower.user._id, follower);
+                                if (_gettingInitialFollowers) continue;
+                                OnChatMsg(
+                                    new TwitchIRC.TwitchMessage(
+                                        TwitchIRC.ToTwitchNotice(
+                                            follower.user.display_name + " is now following!",
+                                            TwitchIRC.NoticeColor.Purple)));
+                                PlayNewFollowerSound();
                             }
+                            _gettingInitialFollowers = false;
                         }
-                        gettingInitialFollowers = false;
                     }
                 }
+            }
+            else
+            {
+                Debug.LogError("Error on page (" + url + "): " + www.error);
             }
             yield return new WaitForSeconds(30f);
         }
@@ -203,38 +239,56 @@ public class TwitchChatTester : MonoBehaviour
     }
 
     // Update the view count as often as possible
-    IEnumerator UpdateViews()
+    private IEnumerator UpdateViews()
     {
         while (Connected && IRC.ChannelName.Length > 0)
         {
-            WWW www = new WWW("https://api.twitch.tv/kraken/streams/" + IRC.ChannelName);
+            var form = new WWWForm();
+            form.AddField("name", "value");
+            var headers = form.headers;
+            var url = "https://api.twitch.tv/kraken/streams/" + IRC.ChannelName;
+
+            headers["Client-ID"] = "REMOVED FOR GITHUB"; //#TODO Replace with your Client-ID
+            var www = new WWW(url, null, headers);
+
             yield return www;
-            ChannelDataFull obj = JsonUtility.FromJson<ChannelDataFull>(www.text);
-            if (obj != null)
+
+            if (string.IsNullOrEmpty(www.error))
             {
-                if (obj.stream != null)
+                var obj = JsonUtility.FromJson<ChannelDataFull>(www.text);
+                if (obj != null)
                 {
-                    if (obj.stream.channel != null)
+                    if (obj.stream != null)
                     {
-                        if (ChannelNameTextMesh != null)
+                        if (obj.stream.channel != null)
                         {
-                            var text = "";
-                            if (!string.IsNullOrEmpty(obj.stream.channel.display_name)) text = string.Format("#{0}", obj.stream.channel.display_name);
-                            else if (!string.IsNullOrEmpty(obj.stream.channel.name)) text = string.Format("#{0}", obj.stream.channel.name);
-                            else text = "Not Streaming";
-                            ChannelNameTextMesh.text = text;
+                            if (ChannelNameTextMesh != null)
+                            {
+                                var text = "";
+                                if (!string.IsNullOrEmpty(obj.stream.channel.display_name))
+                                    text = string.Format("#{0}", obj.stream.channel.display_name);
+                                else if (!string.IsNullOrEmpty(obj.stream.channel.name))
+                                    text = string.Format("#{0}", obj.stream.channel.name);
+                                else text = "Not Streaming";
+                                ChannelNameTextMesh.text = text;
+                            }
+                            if (ViewerCountTextMesh != null)
+                                ViewerCountTextMesh.text = string.Format("Viewers: {0}", obj.stream.viewers);
                         }
-                        if (ViewerCountTextMesh != null) ViewerCountTextMesh.text = string.Format("Viewers: {0}", obj.stream.viewers);
+                        else
+                        {
+                            ClearViewerCountAndChannelName();
+                        }
                     }
                     else
                     {
                         ClearViewerCountAndChannelName();
                     }
                 }
-                else
-                {
-                    ClearViewerCountAndChannelName();
-                }
+            }
+            else
+            {
+                Debug.LogError("Error on page (" + url + "): " + www.error);
             }
             yield return new WaitForSeconds(10f);
         }

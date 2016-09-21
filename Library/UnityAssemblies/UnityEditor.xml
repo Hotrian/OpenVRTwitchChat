@@ -2785,6 +2785,71 @@ Units is normalized time.</para>
       </summary>
       <param name="size">The number of previews that can be loaded into the cache before the least used previews are being unloaded.</param>
     </member>
+    <member name="T:UnityEditor.AudioCurveRendering">
+      <summary>
+        <para>Antialiased curve rendering functionality used by audio tools in the editor.</para>
+      </summary>
+    </member>
+    <member name="T:UnityEditor.AudioCurveRendering.AudioCurveAndColorEvaluator">
+      <summary>
+        <para>Curve evaluation function that allows simultaneous evaluation of the curve y-value and a color of the curve at that point.</para>
+      </summary>
+      <param name="x">Normalized x-position in the range [0; 1] at which the curve should be evaluated.</param>
+      <param name="col">Color of the curve at the evaluated point.</param>
+    </member>
+    <member name="T:UnityEditor.AudioCurveRendering.AudioCurveEvaluator">
+      <summary>
+        <para>Curve evaluation function used to evaluate the curve y-value and at the specified point.</para>
+      </summary>
+      <param name="x">Normalized x-position in the range [0; 1] at which the curve should be evaluated.</param>
+    </member>
+    <member name="T:UnityEditor.AudioCurveRendering.AudioMinMaxCurveAndColorEvaluator">
+      <summary>
+        <para>Curve evaluation function that allows simultaneous evaluation of the min- and max-curves. The returned minValue and maxValue values are expected to be in the range [-1; 1] and a value of 0 corresponds to the vertical center of the rectangle that is drawn into. Values outside of this range will be clamped. Additionally the color of the curve at this point is evaluated.</para>
+      </summary>
+      <param name="x">Normalized x-position in the range [0; 1] at which the min- and max-curves should be evaluated.</param>
+      <param name="col">Color of the curve at the specified evaluation point.</param>
+      <param name="minValue">Returned value of the minimum curve. Clamped to [-1; 1].</param>
+      <param name="maxValue">Returned value of the maximum curve. Clamped to [-1; 1].</param>
+    </member>
+    <member name="M:UnityEditor.AudioCurveRendering.DrawCurve(UnityEngine.Rect,UnityEditor.AudioCurveRendering/AudioCurveEvaluator,UnityEngine.Color)">
+      <summary>
+        <para>Renders a thin curve determined by the curve evaluation function. The solid color of the curve is set by the curveColor argument.</para>
+      </summary>
+      <param name="r">Rectangle determining the size of the graph.</param>
+      <param name="eval">Curve evaluation function.</param>
+      <param name="curveColor">Solid fill color of the curve. The alpha-channel determines the amount of opacity.</param>
+    </member>
+    <member name="M:UnityEditor.AudioCurveRendering.DrawFilledCurve(UnityEngine.Rect,UnityEditor.AudioCurveRendering/AudioCurveEvaluator,UnityEngine.Color)">
+      <summary>
+        <para>Fills the area between the curve evaluated by the AudioCurveAndColorEvaluator provided and the bottom of the rectngle with smooth gradients along the edges.</para>
+      </summary>
+      <param name="r">Rectangle determining the size of the graph.</param>
+      <param name="eval">Normalized x-position in the range [0; 1] at which the curve should be evaluated. The returned value is expected to be in the range [-1; 1] and a value of 0 corresponds to the vertical center of the rectangle that is drawn into. Values outside of this range will be clamped.</param>
+      <param name="curveColor">Solid fill color of the curve. The alpha-channel determines the amount of opacity.</param>
+    </member>
+    <member name="M:UnityEditor.AudioCurveRendering.DrawFilledCurve(UnityEngine.Rect,UnityEditor.AudioCurveRendering/AudioCurveAndColorEvaluator)">
+      <summary>
+        <para>Fills the area between the curve evaluated by the AudioCurveAndColorEvaluator provided and the bottom of the rectngle with smooth gradients along the edges.</para>
+      </summary>
+      <param name="r">Rectangle determining the size of the graph.</param>
+      <param name="eval">Normalized x-position in the range [0; 1] at which the curve should be evaluated. The returned value is expected to be in the range [-1; 1] and a value of 0 corresponds to the vertical center of the rectangle that is drawn into. Values outside of this range will be clamped.</param>
+      <param name="curveColor">Solid fill color of the curve. The alpha-channel determines the amount of opacity.</param>
+    </member>
+    <member name="M:UnityEditor.AudioCurveRendering.DrawMinMaxFilledCurve(UnityEngine.Rect,UnityEditor.AudioCurveRendering/AudioMinMaxCurveAndColorEvaluator)">
+      <summary>
+        <para>Fills the area between the two curves evaluated by the AudioMinMaxCurveAndColorEvaluator provided with smooth gradients along the edges.</para>
+      </summary>
+      <param name="r">Rectangle determining the size of the graph.</param>
+      <param name="eval">Normalized x-position in the range [0; 1] at which the min- and max-curves should be evaluated. The returned minValue and maxValue values are expected to be in the range [-1; 1] and a value of 0 corresponds to the vertical center of the rectangle that is drawn into. Values outside of this range will be clamped.</param>
+    </member>
+    <member name="M:UnityEditor.AudioCurveRendering.DrawSymmetricFilledCurve(UnityEngine.Rect,UnityEditor.AudioCurveRendering/AudioCurveAndColorEvaluator)">
+      <summary>
+        <para>Fills the area between the curve evaluated by the AudioCurveAndColorEvaluator provided and its vertical mirror image with smooth gradients along the edges. Useful for drawing amplitude plots of audio signals.</para>
+      </summary>
+      <param name="r">Rectangle determining the size of the graph.</param>
+      <param name="eval">Normalized x-position in the range [0; 1] at which the curve should be evaluated. The returned value is expected to be in the range [0; 1] and a value of 0 corresponds to the vertical center of the rectangle that is drawn into. Values outside of this range will be clamped.</param>
+    </member>
     <member name="T:UnityEditor.AudioImporter">
       <summary>
         <para>Audio importer lets you modify AudioClip import settings from editor scripts.</para>
@@ -17466,6 +17531,11 @@ To force a reload of the mask, simply set  ModelImporterClipAnimation.maskSource
         <para>Xbox One Specific Player Settings.</para>
       </summary>
     </member>
+    <member name="P:UnityEditor.PlayerSettings.XboxOne.monoLoggingLevel">
+      <summary>
+        <para>This option controls the mono trace log in XboxOne builds. This is a very verbose and expensive tool that can be used to help with debugging a potential mono issue.</para>
+      </summary>
+    </member>
     <member name="M:UnityEditor.PlayerSettings.XboxOne.AddAllowedProductId(System.String)">
       <summary>
         <para>Add a ProductId to the list of products that can load the content package created from your project.  This setting is only available for content packages.</para>
@@ -17503,6 +17573,11 @@ To force a reload of the mask, simply set  ModelImporterClipAnimation.maskSource
     <member name="P:UnityEditor.PlayerSettings.XboxOne.EnablePIXSampling">
       <summary>
         <para>Enable sampling profiler in development builds to provide better profile markers for PIX, including Start and Update markers for script behaviors.</para>
+      </summary>
+    </member>
+    <member name="P:UnityEditor.PlayerSettings.XboxOne.EnableRenderThreadRunsJobs">
+      <summary>
+        <para>Turns on the ability for the render thread to service the normal general purpose job queue while waiting for rendering related work. This is considered an advanced feature and users should only enable if they have a good understanding of their pix profile.</para>
       </summary>
     </member>
     <member name="P:UnityEditor.PlayerSettings.XboxOne.EnableVariableGPU">

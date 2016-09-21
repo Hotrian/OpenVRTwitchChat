@@ -4232,6 +4232,11 @@ Note: Every time you call the method with tolerance specified, a new instance of
         <para>AssetBundles let you stream additional assets via the WWW class and instantiate them at runtime. AssetBundles are created via BuildPipeline.BuildAssetBundle.</para>
       </summary>
     </member>
+    <member name="P:UnityEngine.AssetBundle.isStreamedSceneAssetBundle">
+      <summary>
+        <para>Return true if the AssetBundle is a streamed scene AssetBundle.</para>
+      </summary>
+    </member>
     <member name="P:UnityEngine.AssetBundle.mainAsset">
       <summary>
         <para>Main asset that was supplied when building the asset bundle (Read Only).</para>
@@ -4534,6 +4539,11 @@ See Also: WWW.assetBundle, WWW.LoadFromCacheOrDownload.</param>
         <para>Routing target.</para>
       </summary>
     </member>
+    <member name="P:UnityEngine.Audio.AudioMixer.updateMode">
+      <summary>
+        <para>How time should progress for this AudioMixer. Used during Snapshot transitions.</para>
+      </summary>
+    </member>
     <member name="M:UnityEngine.Audio.AudioMixer.ClearFloat(System.String)">
       <summary>
         <para>Resets an exposed parameter to its initial value.</para>
@@ -4604,6 +4614,21 @@ See Also: WWW.assetBundle, WWW.LoadFromCacheOrDownload.</param>
         <para>Performs an interpolated transition towards this snapshot over the time interval specified.</para>
       </summary>
       <param name="timeToReach">Relative time after which this snapshot should be reached from any current state.</param>
+    </member>
+    <member name="T:UnityEngine.Audio.AudioMixerUpdateMode">
+      <summary>
+        <para>The mode in which an AudioMixer should update its time.</para>
+      </summary>
+    </member>
+    <member name="F:UnityEngine.Audio.AudioMixerUpdateMode.Normal">
+      <summary>
+        <para>Update the AudioMixer with scaled game time.</para>
+      </summary>
+    </member>
+    <member name="F:UnityEngine.Audio.AudioMixerUpdateMode.UnscaledTime">
+      <summary>
+        <para>Update the AudioMixer with unscaled realtime.</para>
+      </summary>
     </member>
     <member name="T:UnityEngine.AudioChorusFilter">
       <summary>
@@ -5527,6 +5552,11 @@ See Also: WWW.assetBundle, WWW.LoadFromCacheOrDownload.</param>
     <member name="P:UnityEngine.AudioSource.isPlaying">
       <summary>
         <para>Is the clip playing right now (Read Only)?</para>
+      </summary>
+    </member>
+    <member name="P:UnityEngine.AudioSource.isVirtual">
+      <summary>
+        <para>True if all sounds played by the AudioSource (main sound started by Play() or playOnAwake as well as one-shots) are culled by the audio system.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.AudioSource.loop">
@@ -7178,6 +7208,11 @@ For this reason, we also provide the read-only property actualRenderingPath whic
     <member name="P:UnityEngine.Canvas.renderOrder">
       <summary>
         <para>The render order in which the canvas is being emitted to the scene.</para>
+      </summary>
+    </member>
+    <member name="P:UnityEngine.Canvas.rootCanvas">
+      <summary>
+        <para>Returns the Canvas closest to root, by checking through each parent and returning the last canvas found. If no other canvas is found then the canvas will return itself.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Canvas.scaleFactor">
@@ -10580,7 +10615,7 @@ Sometimes it is not possible to project (for example when the joints form a cycl
     </member>
     <member name="T:UnityEngine.Display">
       <summary>
-        <para>Provides access to a display / screen for rendering operations. </para>
+        <para>Provides access to a display / screen for rendering operations.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Display.colorBuffer">
@@ -10600,28 +10635,27 @@ Sometimes it is not possible to project (for example when the joints form a cycl
     </member>
     <member name="P:UnityEngine.Display.main">
       <summary>
-        <para>Main Display.
-</para>
+        <para>Main Display.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Display.renderingHeight">
       <summary>
-        <para>Rendering Height.</para>
+        <para>Vertical resolution that the display is rendering at.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Display.renderingWidth">
       <summary>
-        <para>Rendering Width.</para>
+        <para>Horizontal resolution that the display is rendering at.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Display.systemHeight">
       <summary>
-        <para>System Height.</para>
+        <para>Vertical native display resolution.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.Display.systemWidth">
       <summary>
-        <para>System Width.</para>
+        <para>Horizontal native display resolution.</para>
       </summary>
     </member>
     <member name="M:UnityEngine.Display.Activate">
@@ -10645,7 +10679,7 @@ Sometimes it is not possible to project (for example when the joints form a cycl
     </member>
     <member name="M:UnityEngine.Display.SetParams(System.Int32,System.Int32,System.Int32,System.Int32)">
       <summary>
-        <para>This Windows only function can be used to set Size and Position of the Screen when Multi-Display is enabled.</para>
+        <para>Set rendering size and position on screen (Windows only).</para>
       </summary>
       <param name="width">Change Window Width (Windows Only).</param>
       <param name="height">Change Window Height (Windows Only).</param>
@@ -10654,10 +10688,10 @@ Sometimes it is not possible to project (for example when the joints form a cycl
     </member>
     <member name="M:UnityEngine.Display.SetRenderingResolution(System.Int32,System.Int32)">
       <summary>
-        <para>Sets Rendering resolution for the display.</para>
+        <para>Sets rendering resolution for the display.</para>
       </summary>
-      <param name="w">Rendering width.</param>
-      <param name="h">Rendering height.</param>
+      <param name="w">Rendering width in pixels.</param>
+      <param name="h">Rendering height in pixels.</param>
     </member>
     <member name="T:UnityEngine.DistanceJoint2D">
       <summary>
@@ -13031,7 +13065,7 @@ Analogous to the version parameter for WWW.LoadFromCacheOrDownload.</param>
       <summary>
         <para>Retrieves the value of a custom request header.</para>
       </summary>
-      <param name="name">Name of the custom request header. Case-sensitive.</param>
+      <param name="name">Name of the custom request header. Case-insensitive.</param>
       <returns>
         <para>The value of the custom request header. If no custom header with a matching name has been set, returns an empty string.</para>
       </returns>
@@ -13040,7 +13074,7 @@ Analogous to the version parameter for WWW.LoadFromCacheOrDownload.</param>
       <summary>
         <para>Retrieves the value of a response header from the latest HTTP response received.</para>
       </summary>
-      <param name="name">The name of the HTTP header to retrieve. Case-sensitive.</param>
+      <param name="name">The name of the HTTP header to retrieve. Case-insensitive.</param>
       <returns>
         <para>The value of the HTTP header from the latest HTTP response. If no header with a matching name has been received, or no responses have been received, returns null.</para>
       </returns>
@@ -27310,6 +27344,11 @@ MaterialsAccessingViaScript|Accessing Materials via Script.</para>
       </summary>
       <param name="config"></param>
     </member>
+    <member name="P:UnityEngine.Networking.ConnectionConfig.WebSocketReceiveBufferMaxSize">
+      <summary>
+        <para>Defines received buffer size for web socket host; you should set this to the size of the biggest legal frame that you support. If the frame size is exceeded, there is no error, but the buffer will spill to the user callback when full. In case zero 4k buffer will be used. Default value is zero.</para>
+      </summary>
+    </member>
     <member name="T:UnityEngine.Networking.ConnectionSimulatorConfig">
       <summary>
         <para>Create configuration for network simulator; You can use this class in editor and developer build only.</para>
@@ -41242,6 +41281,11 @@ Returns NULL if there is no associated alpha texture for the source sprite. This
     <member name="P:UnityEngine.SystemInfo.supportsAccelerometer">
       <summary>
         <para>Is an accelerometer available on the device?</para>
+      </summary>
+    </member>
+    <member name="P:UnityEngine.SystemInfo.supportsAudio">
+      <summary>
+        <para>Is there an Audio device available for playback?</para>
       </summary>
     </member>
     <member name="P:UnityEngine.SystemInfo.supportsComputeShaders">
