@@ -57,7 +57,7 @@ public class DropdownMatchFileOptions : MonoBehaviour
         if (www.error != null)
             Debug.Log(www.error);
 
-        var clip = www.GetAudioClip(false, true);
+        var clip = www.GetAudioClip(false, false);
 
         if (clip != null)
         {
