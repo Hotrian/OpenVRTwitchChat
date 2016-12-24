@@ -1,4 +1,4 @@
-### This Repo is marked for merging and eventually deletion. Please see #18 for more details. 
+### This Repo is marked for merging and eventually deletion. Please see [#18](https://github.com/Hotrian/OpenVRTwitchChat/issues/18) for more details. 
 ====
 ### This is the new home of the TwitchChatOverlay repository!
 ### It was previously located [over here](https://github.com/Hotrian/HeadlessOverlayToolkit/tree/twitchtest)!
