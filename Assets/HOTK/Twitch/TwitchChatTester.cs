@@ -231,6 +231,7 @@ public class TwitchChatTester : MonoBehaviour
 
     public static string URLAntiCacheRandomizer(string url)
     {
+        return url;
         var r = "";
         r += UnityEngine.Random.Range(1000000, 8000000).ToString();
         r += UnityEngine.Random.Range(1000000, 8000000).ToString();
